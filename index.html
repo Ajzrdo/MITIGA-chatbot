@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Asistente MITIGA</title>
+  <link rel="icon" type="image/png" href="images/mitiga-icon.png" />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --mitiga-primary: #581339;
+      --user-bg: #f4e7f1;
+      --bot-bg: #ffffff;
+      --bg-overlay: rgba(255, 255, 255, 0.75);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: 'Nunito Sans', sans-serif;
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      color: #2e2e2e;
+      overflow: hidden;
+      background: #faf8f9;
+    }
+
+    header {
+      background: #fff;
+      color: var(--mitiga-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 18px;
+      gap: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    header img { height: 44px; }
+    header div { font-size: 22px; font-weight: 700; }
+
+    /* 🔹 Botón de reinicio */
+    .reset-chat {
+      margin-left: auto;
+      background: var(--mitiga-primary);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.1s;
+    }
+    .reset-chat:hover { background: #72215b; transform: scale(1.05); }
+    .reset-chat:active { transform: scale(0.97); }
+
+    #chat {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      padding: 24px 18px;
+      position: relative;
+      z-index: 1;
+    }
+
+    #chat::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image: url("images/mitiga-background.jpg");
+      background-size: cover;
+      background-position: center;
+      filter: blur(1px) brightness(1.1) saturate(1.1);
+      background-attachment: fixed;
+      z-index: 0;
+    }
+
+    #chat::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background: var(--bg-overlay);
+      z-index: 1;
+    }
+
+    .message-block {
+      position: relative;
+      z-index: 3;
+      margin-bottom: 18px;
+      max-width: 92%;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .user {
+      align-self: flex-end;
+      background: var(--user-bg);
+      color: #2e2e2e;
+      border-radius: 16px;
+      padding: 14px 18px;
+      line-height: 1.7;
+      font-size: 19px;
+      box-shadow: none;
+    }
+
+    .bot-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    .bot-header img {
+      width: 36px;
+      height: 36px;
+      object-fit: contain;
+    }
+
+    .bot-header span {
+      color: var(--mitiga-primary);
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .bot-body {
+      background: var(--bot-bg);
+      padding: 16px 20px;
+      border-radius: 16px;
+      font-size: 19px;
+      line-height: 1.8;
+      box-shadow: none;
+      border: none;
+    }
+
+    .question-bubble {
+      background: #f8eaf5;
+      color: #3a1730;
+      font-style: italic;
+      font-size: 18px;
+      border-left: 4px solid var(--mitiga-primary);
+      margin-top: 6px;
+      margin-left: 40px;
+      padding: 12px 18px;
+      border-radius: 12px;
+      box-shadow: 0 1px 5px rgba(0,0,0,0.08);
+    }
+
+    #input-area {
+      display: flex;
+      padding: 12px;
+      background: #fff;
+      border-top: 1px solid #ddd;
+      position: sticky;
+      bottom: 0;
+      z-index: 4;
+      align-items: center;
+      gap: 8px;
+    }
+
+    textarea {
+      flex: 1;
+      border: none;
+      resize: none;
+      padding: 12px;
+      font-size: 18px;
+      outline: none;
+      font-family: 'Nunito Sans', sans-serif;
+      line-height: 1.6;
+      max-height: 140px;
+      overflow-y: auto;
+      border-radius: 8px;
+    }
+
+    button {
+      background: var(--mitiga-primary);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 12px 20px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 16px;
+      transition: background 0.3s;
+      height: 46px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    button:hover { background: #72215b; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Pantalla de inicio */
+    #start-screen {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      z-index: 6;
+      color: #333;
+      background-image: url("images/mitiga-background.jpg");
+      background-size: cover;
+      background-position: center;
+    }
+
+    #start-screen::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(1.5px);
+      z-index: 1;
+    }
+
+    #start-screen-content {
+      position: relative;
+      z-index: 2;
+      max-width: 280px;
+      animation: fadeUp 1.2s ease forwards;
+    }
+
+    #start-screen img[alt="MITIGA logo"] {
+      width: 200px;            /* mejor tamaño base para logos apaisados */
+      max-width: 80vw;         /* adapta en móviles */
+      height: auto;            /* mantiene proporción natural */
+      margin-bottom: 0px;
+      filter: drop-shadow(0 0px 0px rgba(0,0,0,0.25));
+    }
+
+    #start-screen h1 {color: var(--mitiga-primary); font-size: 30px; margin: 5; font-weight: 700;}
+
+    #start-screen h2 {color: var(--mitiga-primary); font-size: 20px; margin: 5; font-weight: 700;}
+    
+    #start-screen p {
+      color: #444;
+      font-size: 17px;
+      margin-top: 10px;
+    }
+
+    .creditos {
+      color: #777;
+      font-size: 16px;
+      margin-top: 20px;
+      margin-bottom: 10px;
+      font-weight: 500;
+      opacity: 0;
+      transform: translateY(15px);
+      animation: fadeUp 0.8s ease forwards;
+      animation-delay: 0.8s;
+    }
+
+    .logo-idipaz {
+      width: 260px;
+      margin-top: 10px;
+      opacity: 0.98;
+      max-width: 85vw;
+      filter: drop-shadow(0 1px 3px rgba(0,0,0,0));
+      opacity: 0;
+      transform: translateY(15px);
+      animation: fadeUp 1s ease forwards;
+      animation-delay: 1s;
+    }
+
+    @keyframes fadeUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    #start-screen.hidden {
+      opacity: 0;
+      transform: translateY(-25px);
+      visibility: hidden;
+      transition:
+        opacity 0.9s ease,
+        transform 0.9s ease,
+        visibility 0.9s ease;
+}
+
+    /* Modal MITIGA */
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .modal-content {
+      background: #fff;
+      border-radius: 14px;
+      padding: 24px 28px;
+      text-align: center;
+      max-width: 320px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.2);
+    }
+
+    .modal-content h3 {
+      color: var(--mitiga-primary);
+      margin-top: 0;
+      font-size: 20px;
+    }
+
+    .modal-content p {
+      color: #555;
+      font-size: 16px;
+      margin-bottom: 20px;
+    }
+
+    .modal-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 14px;
+    }
+
+    .modal-buttons button {
+      border: none;
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    #confirm-yes {
+      background: var(--mitiga-primary);
+      color: #fff;
+    }
+
+    #confirm-no {
+      background: #e9e9e9;
+      color: #333;
+    }
+
+    #confirm-yes:hover { background: #72215b; }
+    #confirm-no:hover { background: #ccc; }
+  </style>
+</head>
+
+<body>
+  <header>
+    <img src="images/mitiga-icon.png" alt="MITIGA icon">
+    <div>Asistente MITIGA</div>
+    <button class="reset-chat" onclick="reiniciarConversacion()">🗑 Nueva conversación</button>
+  </header>
+
+  <div id="chat">
+    <div id="start-screen">
+      <div id="start-screen-content">
+        <img src="images/mitiga-logo_trsp.png" alt="MITIGA logo">
+        <h1>Hola, soy el Asistente MITIGA</h1>
+        <h2>Estoy aquí para ayudarte a comprender mejor los cambios y situaciones que observas en el día a día del cuidado.</h2>
+        <p class="creditos">(c) IdiPAZ + Dekipling</p>
+        <img src="images/LogoLAPAZ_IdiPAZ_Trsp.png" alt="Logo IdiPAZ + La Paz" class="logo-idipaz">
+      </div>
+    </div>
+  </div>
+
+  <div id="input-area">
+    <textarea id="userInput" rows="1" placeholder="Escribe tu pregunta..."></textarea>
+    <button onclick="startChat()">Enviar</button>
+  </div>
+
+  <!-- Modal de confirmación -->
+  <div id="confirm-modal" class="modal">
+    <div class="modal-content">
+      <h3>¿Comenzar una nueva conversación?</h3>
+      <h2>Se eliminará el historial actual del chat.</h2>
+      <div class="modal-buttons">
+        <button id="confirm-yes">Sí</button>
+        <button id="confirm-no">No</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

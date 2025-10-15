@@ -1,0 +1,1129 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+“Muchas veces, lo que no se sabe lo explica todo.”
+
+
+
+
+Bienvenida a MITIGA
+
+Cuidar a una persona con deterioro cognitivo puede ser tan exigente como valioso. 
+
+Cada día hay pequeños cambios —en su ánimo, en su sueño, en su comportamiento, en su capacidad para hacer cosas— que pueden parecer sin importancia, pero que en realidad son las señales que permiten al médico ajustar el tratamiento o anticipar complicaciones.
+
+MITIGA nace precisamente para eso: transformar la observación diaria en información útil y ordenada.
+
+No es una herramienta médica ni sustituye al médico; es una forma de registrar lo que ocurre en casa para que la atención sea más precisa y personalizada.
+
+Qué hace MITIGA
+
+Te permite anotar lo que observas (síntomas, alteraciones del sueño, incidencias, medicación) sin necesidad de conocimientos técnicos.
+
+Organiza esos datos de forma automática y genera gráficos claros y resúmenes que el médico puede interpretar fácilmente.
+
+Ofrece una visión global del paciente, integrando lo que sucede día a día con su evolución funcional y cognitiva.
+
+Por qué es importante registrar
+
+Cada registro cuenta una parte de la historia del paciente. Al revisar varios juntos, el médico puede detectar patrones, efectos secundarios o señales tempranas de complicaciones.
+
+Un registro aparentemente “menor” —por ejemplo, un cambio de ánimo, un despertar nocturno o un olvido puntual— puede ser clave para prevenir eventos médicos evitables.
+
+El valor añadido
+
+Para el cuidador: tranquilidad y sensación de control.
+
+Para el médico: información objetiva y continua.
+
+Para el paciente: una atención más ajustada a su realidad.
+
+MITIGA está pensada para ser intuitiva, discreta y acompañarte en tu día a día, no para ocupar tu tiempo, sino para ayudarte a aprovecharlo mejor.
+
+
+
+Piensa en MITIGA como una libreta digital inteligente que guarda todo lo importante del día a día, pero que además lo organiza y traduce en informes claros para el médico.
+
+
+
+
+Primer acceso y activación
+
+El primer contacto con MITIGA es muy sencillo, pero a la vez fundamental: aquí se establece tu perfil, tu rol y la forma en que la app te identificará.
+
+Todo lo que registres a partir de este momento quedará vinculado de forma segura a tu cuenta y a la persona atendida.
+
+Inicio de sesión (alias + código de acceso) 
+
+MITIGA utiliza un sistema de acceso seguro y simplificado.
+
+En lugar de una contraseña tradicional, emplea un alias personal y un código de acceso único.
+
+¿Por qué funciona así?
+
+Porque este modelo es más fácil de recordar para el usuario y más difícil de vulnerar.
+
+El código se genera a partir de un sistema de cifrado (hash SHA-256) y está asociado a tu perfil: cuidador, profesional o médico.
+
+Qué ocurre al iniciar sesión:
+
+La app comprueba que los datos son correctos.
+
+Si lo son, activa tu perfil y guarda tu alias localmente para futuros accesos.
+
+Si no, muestra mensajes claros (por ejemplo, “alias no encontrado” o “código incorrecto”) para ayudarte a corregirlo.
+
+
+
+Una vez activado el dispositivo, podrás navegar por todas las secciones sin volver a introducir tus datos cada vez.
+
+
+
+Registro de nuevos usuarios
+
+Si es tu primera vez, pulsa en “Registrarse”.
+
+Aquí establecerás tu identidad dentro del sistema y tu rol.
+
+Alias: será tu nombre identificativo en MITIGA.
+
+Tipo de usuario: cuidador, profesional o médico.
+
+Código de acceso: un código seguro, generado específicamente para ti.
+
+Consentimientos: lectura y aceptación del aviso legal y del consentimiento informado.
+
+
+
+¿Por qué se piden estos datos?
+
+Porque MITIGA opera dentro de un marco sanitario. Es esencial que cada rol tenga acceso solo a la información que le corresponde y que los datos se manejen con seguridad y trazabilidad.
+
+Una vez completado el registro:
+
+Se crea automáticamente un paciente asociado (si no existía antes).
+
+El sistema te lleva a la pantalla “Acerca de MITIGA”, donde encontrarás una introducción al proyecto y acceso directo al soporte técnico.
+
+
+
+Generador de códigos de acceso
+
+Los profesionales o administradores pueden generar códigos de acceso para nuevos usuarios.
+
+El generador utiliza una clave determinista, lo que significa que:
+
+Cada alias y rol producen un único código válido.
+
+No hay duplicados, y todos los accesos quedan verificados y seguros.
+
+¿Por qué es útil?
+
+Porque evita errores o contraseñas inseguras y garantiza que los cuidadores o médicos que acceden a la información de un paciente lo hacen mediante una autorización controlada.
+
+
+
+Recorrido Inicial y pantalla “Acerca de”
+
+La primera vez que entres, MITIGA te guiará con un recorrido inicial.
+
+En siete pantallas te explicará de forma visual:
+
+Cómo registrar síntomas o incidencias.
+
+Cómo ver la evolución del paciente.
+
+Cómo consultar la parte educativa y de soporte.
+
+Este recorrido también está disponible más adelante en el menú Soporte → Guía de uso.
+
+Después del Recorrido Inicial, aparecerá la pantalla “Acerca de MITIGA”, donde se presenta la filosofía del proyecto y se ofrecen accesos rápidos a:
+
+Documentación legal.
+
+Contacto técnico.
+
+Soporte general.
+
+
+
+Esta pantalla es también una declaración de intención: MITIGA no es solo una app, es un entorno de acompañamiento donde la tecnología y el cuidado se unen.
+
+
+
+
+Navegación y recordatorios
+
+MITIGA está diseñada para que puedas moverte por ella de forma intuitiva, sin tener que memorizar pasos ni depender de manuales técnicos. Su estructura busca que, en cualquier momento, sepas dónde estás y qué puedes hacer a continuación.
+
+La navegación combina claridad visual, accesos rápidos y recordatorios automáticos que te ayudan a mantener un seguimiento constante sin esfuerzo.
+
+
+
+Menú principal
+
+El menú de inicio es el punto de partida de toda la aplicación.
+
+Aquí verás cuatro tarjetas grandes, cada una con una imagen representativa:
+
+Síntomas e Incidencias
+Donde puedes registrar lo que ocurre en el día a día: un cambio de humor, una caída, una alteración del sueño o un problema con la medicación.
+
+Calendario
+Muestra todo lo registrado en formato visual (por días, semanas o meses).
+Es muy útil para detectar repeticiones o periodos de estabilidad.
+
+Paciente y Evolución
+Te permite ver cómo ha ido cambiando el estado del paciente con el paso del tiempo.
+Incluye escalas médicas (Barthel, Lawton, Zarit, etc.) pero de forma comprensible y adaptada a tu lenguaje.
+
+Entendiendo la Enfermedad
+Una biblioteca práctica con artículos breves, consejos y estrategias cotidianas para convivir mejor con el deterioro cognitivo.
+
+¿Por qué es importante este menú?
+
+Porque es la puerta de entrada a todos los módulos de MITIGA.
+
+Desde él, puedes registrar, revisar, aprender y generar informes.
+
+El diseño está pensado para minimizar errores y ofrecer una ruta lógica de trabajo: 
+observar → registrar → comprender → actuar.
+
+Cada vez que vuelvas al menú principal, las imágenes se actualizan automáticamente para reflejar los últimos cambios o incorporaciones que hayas hecho.
+
+Esto hace que la interfaz sea siempre “viva” y actual.
+
+
+
+Barra inferior de navegación
+
+La barra inferior está siempre visible en la mayoría de pantallas y sirve como atajo rápido. Cuenta con tres botones:
+
+Inicio: te lleva directamente al menú principal.
+
+Nuevo registro: abre el centro de registros (síntomas, incidencias, medicación, etc.).
+
+Resumen por fecha: te muestra informes y gráficos del periodo que elijas.
+
+Piénsala como tu “barra de anclaje”. Incluso si te pierdes en otra pantalla, un toque te lleva de vuelta a donde necesites.
+
+
+
+Recordatorios automáticos
+
+MITIGA puede recordarte, de forma automática, que es momento de registrar información.
+
+Esto es muy útil cuando el cuidado se vuelve rutina y los detalles pueden pasar desapercibidos.
+
+Cuando instales la app, te pedirá permiso para enviar notificaciones.
+
+Si lo aceptas, se programará un aviso cada 7 días (o el intervalo que determines).
+
+Al pulsar una notificación, se abrirá directamente la pantalla correspondiente para registrar.
+
+Si interactúas con una alerta, el sistema reprograma automáticamente la siguiente, sin que tengas que hacerlo tú.
+
+Esta función te ayuda a mantener la regularidad en el seguimiento, sin generar sensación de presión.
+
+Registrar con frecuencia no es cuestión de cantidad, sino de constancia: unos pocos minutos a la semana pueden marcar la diferencia.
+
+
+
+Perfil de usuario
+
+El apartado Usuario te muestra la información personal y de actividad asociada a tu cuenta:
+
+Tu rol actual (cuidador, profesional, médico).
+
+El paciente activo que estás siguiendo.
+
+La fecha en que comenzaste el seguimiento.
+
+Un espacio para notas personales o información útil.
+
+Estadísticas sencillas: número total de registros y media semanal de uso.
+
+Este módulo te permite entender tu nivel de implicación y constancia, algo que los médicos valoran mucho en la coordinación del seguimiento.
+
+La regularidad en el registro no solo ayuda al paciente; también mejora la comunicación entre cuidador y médico, evitando repeticiones o lagunas en la información.
+
+Gestión de pacientes y accesos compartidos
+
+MITIGA está pensada para situaciones reales: hay cuidadores principales, cuidadores secundarios, profesionales y médicos que colaboran en torno a un mismo paciente.
+
+Por eso, la app incorpora un sistema flexible de gestión de pacientes, donde puedes añadir, compartir o consultar información de forma segura.
+
+
+
+Lista de pacientes
+
+En esta pantalla verás todos los pacientes a los que tienes acceso, junto con información básica de cada uno:
+
+El alias o nombre del paciente.
+
+La fecha del último registro realizado (para detectar si hace tiempo que no se actualiza).
+
+Botones rápidos para informes, PIN temporal o desvinculación.
+
+Si solo tienes un paciente, se seleccionará automáticamente.
+
+Si gestionas a varios, la aplicación te pedirá que elijas cuál quieres tener activo.
+
+
+
+Saber a quién estás registrando evita confusiones y mantiene la coherencia de los datos.
+
+
+
+Crear un nuevo paciente
+
+Si inicias el seguimiento de una nueva persona:
+
+Pulsa “Añadir paciente”.
+
+Indica la fecha de inicio (día en que comienzas a acompañar o asistir).
+
+Añade notas si lo deseas.
+
+MITIGA generará automáticamente un código aleatorio de cuatro letras, único y no repetido.
+
+Ese paciente quedará vinculado a tu perfil, listo para comenzar a registrar su evolución.
+
+
+
+Vinculación mediante PIN temporal
+
+En MITIGA existen dos tipos de pacientes:
+
+Pacientes generados por el propio usuario, que son creados desde la aplicación y permanecen vinculados de forma permanente a su cuenta.
+
+Pacientes vinculados temporalmente, que son aquellos a los que se accede mediante un PIN proporcionado por su cuidador o responsable principal.
+
+Estos últimos pueden consultarse y actualizarse mientras el vínculo esté activo, pero su acceso depende del consentimiento del cuidador.
+
+A veces es necesario que otro usuario (por ejemplo, un familiar o médico) pueda acceder a la información de un paciente.
+
+MITIGA lo hace posible de manera controlada mediante un PIN temporal:
+
+Introduces el código del paciente y el PIN de cuatro dígitos.
+
+La app valida ambos datos con REDCap.
+
+Si todo es correcto, el paciente se añade a tu lista local y puedes empezar a registrar.
+
+El PIN tiene una duración limitada (unos 10 minutos), lo que garantiza la seguridad del proceso.
+
+Este sistema permite compartir acceso sin comprometer la privacidad ni duplicar información.
+
+
+
+Desvincular pacientes
+
+Si ya no es necesario mantener esa relación, pueden desvincularse en cualquier momento desde la lista de pacientes.
+
+Nota: los pacientes creados por el propio usuario forman parte de su cuenta principal y no pueden eliminarse desde la app, ya que constituyen el historial clínico asociado a su perfil.
+
+De este modo, MITIGA diferencia entre pacientes de gestión directa (creados por el usuario) y pacientes compartidos temporalmente (autorizados por PIN), garantizando tanto la colaboración como la protección de la información.
+
+
+
+Informes y paneles consolidados de los pacientes vinculados
+
+Además de los informes tradicionales, MITIGA ahora ofrece una visión integrada del paciente:
+
+Desde el menú de pacientes puedes abrir directamente el Resumen por fecha (informes de síntomas) o la Evolución por fechas (evaluaciones funcionales, cognitivas y de convivencia).
+
+También puedes acceder al nuevo Resumen General del Paciente, un panel unificado que agrupa:
+
+Registros diarios.
+
+Evaluaciones clínicas.
+
+Tratamientos activos y cerrados.
+
+Valoraciones médicas.
+
+Escalas de evolución.
+
+Este panel no solo muestra datos, sino que revela relaciones: qué síntomas aparecieron tras un cambio de medicación, cómo se ha modificado la autonomía o qué días hubo más incidencias.
+
+Al final, puedes generar un PDF consolidado para compartirlo con el médico o guardarlo para consulta.
+
+La utilidad real de MITIGA está aquí: convertir los datos en información comprensible y accionable.
+
+
+
+
+
+
+Registro de síntomas, incidencias y medicación
+
+Registrar lo que ocurre en el día a día es el corazón de MITIGA.
+
+Cada anotación que haces —aunque parezca pequeña— se convierte en información que ayuda a prevenir complicaciones, ajustar tratamientos y mejorar la calidad de vida del paciente y su entorno.
+
+En este bloque verás cómo funciona el Centro de Registros, qué tipos de información se pueden introducir y para qué sirve cada uno.
+
+
+
+Centro de registros
+
+Desde el menú principal o el acceso rápido de la barra inferior, puedes entrar a “Síntomas e Incidencias”, que actúa como un centro desde el que elegir qué quieres registrar.
+
+Los formularios disponibles son:
+
+Síntoma conductual
+
+Alteración del sueño
+
+Incidencia clínica
+
+Evento de medicación
+
+Resumen por fecha
+
+Fichas informativas
+
+Cada uno tiene su propio propósito, pero todos siguen la misma lógica:
+
+registrar de forma sencilla y ordenada qué pasó, cuándo, con qué intensidad, y qué hiciste tú como cuidador o profesional.
+
+
+
+Síntoma conductual
+
+Los cambios de conducta son muy frecuentes en el deterioro cognitivo: agitación, ansiedad, irritabilidad, desorientación o repetición de preguntas.
+
+Este formulario te ayuda a registrar estos episodios para poder analizarlos después junto con el médico.
+
+Qué se solicita:
+
+Síntoma observado: selecciona uno de la lista (solo uno por registro).
+
+Momento del día: cuándo ocurrió (mañana, tarde, noche).
+
+Duración: breve, moderada o prolongada.
+
+Ansiedad asociada: si el episodio fue persistente o generó angustia.
+
+Intervención aplicada: qué hiciste para ayudar (hablar, acompañar, cambiar de actividad).
+
+Impacto en el cuidador: si fue fácil o difícil de manejar. 
+
+Notas adicionales.
+
+Registrar estos eventos permite al neurólogo valorar si los cambios en conducta están relacionados con la medicación, el sueño o el entorno. También ayuda a identificar patrones repetitivos y prevenir crisis futuras.
+
+Antes de guardar, MITIGA comprueba que los campos clave estén completos y te avisa si falta alguno.
+
+Si intentas salir sin guardar, te pedirá confirmación para que no pierdas datos.
+
+
+
+Alteración del sueño
+
+El descanso es uno de los factores más sensibles en la evolución del Alzheimer.
+
+Una mala noche puede alterar el comportamiento, la memoria y el estado de ánimo del paciente durante el día siguiente.
+
+En esta sección puedes registrar cualquier problema relacionado con el sueño:
+
+Despertares frecuentes.
+
+Pesadillas o gritos nocturnos.
+
+Dormir demasiado o demasiado poco.
+
+Vagabundeo o actividad nocturna.
+
+Qué se solicita:
+
+Problemas de sueño observados (puedes elegir varios).
+
+Tramo horario: primera o segunda mitad de la noche.
+
+Medidas adoptadas: por ejemplo, acompañar, administrar medicación de rescate o modificar la rutina.
+
+Dosis y hora (si se usó medicación).
+
+Impacto en el paciente y en ti como cuidador.
+
+Fecha de fin (si el problema duró varios días).
+
+Notas.
+
+Registrar alteraciones del sueño ayuda a ajustar horarios de medicación, identificar posibles efectos secundarios y mejorar la calidad del descanso tanto del paciente como del cuidador.
+
+
+
+Incidencias clínicas
+
+Aquí puedes registrar eventos de salud imprevistos o situaciones que se salen de la rutina:
+
+Dolor.
+
+Fiebre.
+
+Caídas.
+
+Ingreso hospitalario.
+
+O cualquier otra alteración física relevante.
+
+El formulario se adapta automáticamente al tipo de incidencia elegida.
+
+Por ejemplo:
+
+Si eliges “dolor”, se activará una escala de intensidad (EVA).
+
+Si eliges “ingreso hospitalario”, se pedirá la fecha de ingreso y se ocultarán campos innecesarios.
+
+Qué se solicita:
+
+Tipo de incidencia.
+
+Fecha y duración.
+
+Intervención realizada.
+
+Eficacia (si la medida fue o no útil).
+
+Impacto (leve, moderado, alto).
+
+Notas adicionales.
+
+Estas incidencias son clave para el neurólogo o médico de atención primaria. Permiten ver si hay desajustes en el tratamiento, reacciones adversas o situaciones que podrían evitarse en el futuro.
+
+
+
+Evento de medicación
+
+El uso de medicación en personas con deterioro cognitivo requiere un seguimiento especial.
+
+Aquí puedes registrar qué ha ocurrido con un fármaco concreto.
+
+Ejemplos:
+
+El paciente olvidó una toma.
+
+Rechazó el medicamento.
+
+Apareció un efecto secundario.
+
+Se usó un fármaco de rescate.
+
+Qué se solicita:
+
+Medicamento implicado (puedes elegir uno existente o crear uno nuevo).
+
+Tipo de evento: olvido, rechazo, efecto secundario, etc.
+
+Síntomas asociados.
+
+Medidas adoptadas y eficacia.
+
+Notas.
+
+MITIGA vincula automáticamente estos registros con la lista de tratamientos activos del paciente, lo que permite detectar si hay medicaciones que generan más incidencias que otras.
+
+Este apartado es especialmente útil para el médico, que podrá revisar de un vistazo si hay problemas de adherencia o efectos no deseados tras un cambio de dosis.
+
+
+
+Medidas adoptadas
+
+Este componente aparece en varios formularios y te ayuda a registrar qué hiciste ante cada situación.
+
+Puede incluir:
+
+Medicamentos de rescate utilizados.
+
+Cambios de entorno (luz, ruido, compañía).
+
+Acciones no farmacológicas (escuchar música, dar un paseo, etc.).
+
+La app recuerda las opciones más utilizadas y las sugiere automáticamente, evitando tener que escribirlo cada vez.
+
+
+
+En resumen:
+
+Los registros son la base del funcionamiento de MITIGA.
+
+Cuanto más consistentes sean tus anotaciones, más fácil será para el médico entender el contexto y ajustar las decisiones clínicas.
+
+No hace falta escribir todos los días, pero sí registrar los momentos importantes.
+
+Lo que hoy parece anecdótico, mañana puede ser una pista valiosa.
+
+
+
+
+Resúmenes y planificación diaria
+
+Registrar es el primer paso; visualizar es el segundo.
+
+MITIGA organiza automáticamente toda la información que introduces, transformándola en gráficos, calendarios y resúmenes fáciles de interpretar.
+
+Estos apartados te ayudan a ver la evolución de forma objetiva y a preparar informes claros para la consulta médica.
+
+
+
+Resumen por fecha
+
+El Resumen por fecha funciona como un informe dinámico.
+
+Permite elegir un rango de días (por ejemplo, del 1 al 15 de cada mes) y ver todo lo ocurrido en ese periodo.
+
+Qué muestra:
+
+Gráficos de síntomas e incidencias agrupados por nivel de impacto.
+
+Eventos destacados (💊 medicaciones de rescate, ⚠️ ansiedad alta, ❗ registros graves).
+
+Tabla con detalles y acceso a los registros originales.
+
+Botón de generación de PDF para crear un informe descargable o imprimible.
+
+Este módulo es muy útil antes de las consultas médicas o reuniones familiares: resume lo esencial sin necesidad de revisar decenas de registros.
+
+
+
+Calendario clínico
+
+El calendario es una forma visual de ver el día a día del paciente. 
+
+Puedes elegir tres vistas:
+
+Mensual: dos meses consecutivos para tener una visión amplia.
+
+Semanal: ideal para identificar tendencias cortas.
+
+Diaria: muestra los eventos de un día y permite crear nuevos registros desde el botón flotante ➕.
+
+Funcionalidades:
+
+Desliza para avanzar o retroceder entre semanas o meses.
+
+Pulsa sobre un evento para abrir sus detalles.
+
+Los eventos nocturnos se dividen automáticamente en el tramo correcto (antes o después de medianoche).
+
+El calendario facilita la comprensión de patrones: días con más alteraciones, noches complicadas o periodos tranquilos. Es una herramienta muy visual que mejora la comunicación con los profesionales.
+
+
+
+Resumen general del paciente
+
+El Resumen General es uno de los grandes avances de la nueva versión de MITIGA.
+
+Reúne en una sola pantalla toda la información relevante de un paciente:
+
+Tratamientos activos y finalizados.
+
+Registros diarios (síntomas, incidencias, medicación).
+
+Evaluaciones funcionales, cognitivas y de convivencia.
+
+Test de carga del cuidador (Zarit).
+
+Valoraciones clínicas y notas.
+
+Cada bloque está ordenado y puede expandirse o contraerse.
+
+También puedes ordenar por fecha, acceder al detalle de cada registro y generar un PDF consolidado.
+
+Esta vista no solo ahorra tiempo: permite ver relaciones entre hechos aparentemente desconectados —por ejemplo, un cambio de medicación y un aumento de caídas o alteraciones del sueño.
+
+
+
+Es una herramienta que fomenta la comprensión del proceso completo y ayuda a todos los implicados a tomar decisiones con más criterio.
+
+
+
+
+
+
+Evolución del paciente
+
+MITIGA no solo te ayuda a registrar lo que ocurre día a día; también te permite observar la evolución del paciente a lo largo del tiempo.
+
+Gracias a las evaluaciones periódicas, puedes ver de forma clara si su autonomía, su memoria o su comportamiento están mejorando, manteniéndose estables o cambiando.
+
+Este módulo es el puente entre la observación cotidiana y la interpretación médica: convierte la experiencia del cuidador en datos clínicamente útiles.
+
+
+
+Evaluación funcional (Barthel y Lawton)
+
+Esta sección analiza la autonomía del paciente en las actividades de la vida diaria.
+
+Las escalas utilizadas (Barthel y Lawton) son herramientas validadas que ayudan a medir el grado de independencia en tareas como vestirse, comer, desplazarse o realizar tareas domésticas.
+
+Qué se hace: 
+
+Contestar preguntas sencillas sobre lo que el paciente puede hacer solo y lo que necesita ayuda.
+
+Cada respuesta suma puntos automáticamente.
+
+El resultado total se clasifica como:
+
+Dependencia leve
+
+Dependencia moderada
+
+Dependencia grave
+
+MITIGA compara la puntuación actual con la evaluación anterior y muestra si hay mejora o deterioro.
+
+Esta evaluación es esencial para valorar la necesidad de apoyos adicionales o ajustes en el plan de cuidados. Pequeñas variaciones pueden indicar avances o retrocesos significativos.
+
+
+
+Evolución cognitiva
+
+Evalúa cómo está funcionando la mente del paciente.
+
+Se centra en cinco áreas clave:
+
+Memoria – capacidad para recordar información reciente.
+
+Atención – concentración y respuesta ante estímulos.
+
+Lenguaje – comprensión y expresión verbal.
+
+Orientación – reconocimiento del entorno y las personas.
+
+Funciones ejecutivas – planificación y toma de decisiones.
+
+Cada área se puntúa de 1 a 7.
+
+MITIGA traduce las puntuaciones en colores y comentarios automáticos para facilitar la interpretación:
+
+🟢 Estable
+
+🟡 Ligero cambio
+
+🟠 Empeoramiento
+
+🔴 Deterioro significativo
+
+Registrar estas áreas permite detectar de manera temprana alteraciones cognitivas y planificar estrategias de estimulación adecuadas.
+
+
+
+Evolución en el ámbito de la convivencia
+
+La enfermedad no afecta solo al paciente: también impacta en su entorno familiar, su rutina y su bienestar emocional.
+
+Por eso, esta evaluación recoge los cambios que se producen en la convivencia.
+
+Qué se analiza:
+
+Entorno físico: si ha habido modificaciones en la vivienda (barreras, adaptaciones, mudanzas).
+
+Personas: cambios de cuidadores, visitas o acompañantes.
+
+Rutina: alteraciones en horarios o actividades.
+
+Alimentación: variaciones en la dieta o el apetito.
+
+Estrés del entorno: conflictos, sobrecarga o cansancio del cuidador.
+
+Cada punto se valora con un deslizador de intensidad que usa colores:
+
+🟢 bajo impacto, 	🟡 moderado, 		🟠 alto, 		🔴 muy alto.
+
+La app calcula una conclusión global, mostrando si la situación general del hogar es estable o si requiere atención.
+
+Esta visión del entorno es clave. A veces los cambios en la conducta o el sueño no se deben a la enfermedad, sino al ambiente o a la dinámica familiar.
+
+
+
+Carga del cuidador (Zarit reducido)
+
+Cuidar también tiene un precio emocional.
+
+MITIGA incorpora un cuestionario breve (7 preguntas) para valorar la percepción de carga del cuidador principal.
+
+Cada ítem se responde de 0 a 4, donde 0 es “nunca” y 4 es “siempre”.
+
+La app suma automáticamente las respuestas y clasifica el nivel de carga:
+
+🟢 Baja
+
+🟡 Moderada
+
+🔴 Intensa
+
+El objetivo no es evaluar tu desempeño, sino detectar signos de agotamiento para poder actuar antes de que afecte al bienestar de ambos.
+
+
+
+Evolución consolidada
+
+Aquí puedes ver la evolución completa del paciente en gráficos interactivos.
+
+Permite filtrar por fechas y muestra:
+
+Línea temporal de las escalas Barthel y Lawton.
+
+Evolución cognitiva.
+
+Cambios en la convivencia.
+
+Niveles de carga del cuidador.
+
+Los gráficos se pueden ampliar o desplazar, y la app permite generar un informe PDF con todos los datos visuales.
+
+Ver la evolución consolidada ayuda a comprender tendencias y anticipar necesidades. Por ejemplo, si la autonomía baja justo después de un cambio de medicación, esa información puede resultar determinante para el médico.
+
+
+
+Valoraciones en consulta
+
+Esta sección está pensada para las evaluaciones realizadas por profesionales sanitarios.
+
+Cada valoración resume el estado general del paciente en un momento determinado, incorporando información como:
+
+Estado cognitivo.
+
+Nivel de independencia.
+
+Calidad de vida percibida.
+
+Cambios en el entorno.
+
+Impacto del plan de tratamiento.
+
+El formulario requiere completar al menos tres campos y se guarda junto con las observaciones del médico o profesional.
+
+Esta información es la más directamente médica, pero su comprensión también beneficia al cuidador: le ayuda a saber qué cambios han motivado decisiones clínicas recientes.
+
+
+
+En conjunto, el módulo de Evolución del Paciente permite pasar de la intuición (“parece peor que antes”) a la evidencia (“la puntuación de autonomía ha bajado un 15% y coincide con más alteraciones del sueño”).
+
+Así se transforma la observación doméstica en conocimiento útil para la atención sanitaria.
+
+
+
+
+Tratamientos y seguimiento farmacológico
+
+El tratamiento farmacológico es una parte crítica del cuidado en personas con Alzheimer y otras demencias.
+
+Sin embargo, su eficacia depende en gran medida de la adherencia (tomar la medicación correctamente) y de la observación de efectos o incidencias.
+
+MITIGA facilita este seguimiento de manera sencilla y segura, permitiendo controlar cada cambio y correlacionarlo con la evolución clínica.
+
+
+
+Lista de tratamientos
+
+En esta pantalla encontrarás todos los tratamientos del paciente, tanto los activos como los que ya han finalizado.
+
+Cada registro incluye:
+
+Nombre del medicamento.
+
+Dosis y frecuencia.
+
+Fecha de inicio y, si corresponde, de finalización.
+
+Motivo o diagnóstico asociado.
+
+Puedes ordenar la lista por nombre, tipo o fecha, y acceder al detalle de cada tratamiento para editarlo o revisarlo.
+
+Mantener esta lista actualizada es fundamental para evitar duplicidades, confusiones o interacciones no deseadas entre fármacos.
+
+
+
+Añadir o editar un tratamiento
+
+Para crear un nuevo tratamiento:
+
+Pulsa el botón ➕ (flotante).
+
+Selecciona un medicamento de la lista o crea uno nuevo.
+
+Define:
+
+Dosis.
+
+Frecuencia (mañana, tarde, noche o según necesidad).
+
+Fecha de inicio y fin (si la hay).
+
+Motivo (por ejemplo: control del sueño, memoria, ansiedad).
+
+Añade notas si lo deseas.
+
+La aplicación valida automáticamente los campos obligatorios y evita que se pierdan datos si sales sin guardar.
+
+MITIGA también permite:
+
+Modificar un tratamiento existente (si cambió la dosis o frecuencia).
+
+Marcar su finalización y explicar el motivo (por ejemplo, cambio de medicación o suspensión temporal).
+
+Eliminar registros duplicados o antiguos, manteniendo siempre un historial completo.
+
+
+
+Medicación de rescate y personalización
+
+En muchos casos, el paciente dispone de medicación de rescate (por ejemplo, para episodios de agitación o insomnio).
+
+MITIGA gestiona este tipo de tratamientos de forma diferenciada:
+
+Los tratamientos de rescate se muestran con un símbolo 💊 y pueden tener horarios variables.
+
+Cuando se utilizan, se registran también las circunstancias y la eficacia observada.
+
+Los medicamentos o motivos personalizados que crees quedan guardados localmente para reutilizarlos en el futuro.
+
+Esto permite al médico analizar si el uso de medicación de rescate está aumentando —una señal de que el tratamiento base puede necesitar revisión—.
+
+
+
+Utilidad práctica del seguimiento farmacológico
+
+El módulo de tratamientos cumple una función doble:
+
+Para el cuidador:
+
+Ayuda a controlar las tomas, los cambios y las suspensiones.
+
+Permite anotar efectos secundarios sin olvidar los detalles.
+
+Reduce errores al compartir información con otros profesionales o familiares.
+
+Para el médico:
+
+Facilita la correlación entre medicación y evolución clínica.
+
+Permite ajustar dosis con base en hechos y no solo percepciones.
+
+Aporta evidencia para evitar polimedicación o interacciones innecesarias.
+
+En personas con deterioro cognitivo, la adherencia y el control farmacológico son tan importantes como el propio medicamento. MITIGA convierte ese control en un proceso sencillo y seguro.
+
+
+
+Resumen del Bloque 8:
+
+Este módulo consolida el registro de tratamientos y lo conecta con el resto del sistema MITIGA.
+
+El resultado es una visión integral del cuidado, donde síntomas, medicación y evolución pueden analizarse juntos para mejorar la toma de decisiones médicas y familiares.
+
+
+
+
+Material educativo y soporte
+
+MITIGA no es solo una herramienta de registro; es también un espacio de aprendizaje y acompañamiento.
+
+Su objetivo es empoderar a las familias y cuidadores ofreciéndoles información práctica, actualizada y de confianza, directamente dentro de la aplicación.
+
+Además, cuando surgen dudas técnicas o de uso, el módulo de soporte te ofrece una vía sencilla para resolverlas. 
+
+Entendiendo la enfermedad
+
+Cuidar es más fácil cuando se comprende lo que está ocurriendo.
+
+En este apartado encontrarás artículos breves y claros, escritos en un lenguaje sencillo, que explican los aspectos fundamentales del deterioro cognitivo y sus cuidados.
+
+Contenidos principales:
+
+Qué es el deterioro cognitivo:
+Explica cómo afecta al cerebro, qué partes se alteran y por qué surgen los síntomas.
+
+Tipos de demencia:
+Diferencias entre Alzheimer, demencia vascular, por cuerpos de Lewy y otras variantes.
+
+Síntomas frecuentes:
+Olvidos, desorientación, pérdida de iniciativa, cambios de humor, entre otros.
+
+Desencadenantes:
+Factores que pueden agravar temporalmente la confusión o la irritabilidad (falta de sueño, estrés, infecciones, deshidratación, etc.).
+
+Estrategias de cuidado:
+Consejos prácticos para manejar conductas difíciles, fomentar la calma y mejorar la comunicación.
+
+Planificación de cuidados:
+Una guía especialmente útil para anticipar decisiones importantes:
+
+Ajustes en el hogar (seguridad, iluminación, accesibilidad).
+
+Prevención de caídas o fugas.
+
+Documentos legales y médicos que conviene preparar con tiempo.
+
+Coordinación entre familiares, profesionales y servicios sociosanitarios.
+
+El objetivo de esta sección es que el cuidador deje de sentirse solo frente a una situación que parece abrumadora. Comprender el porqué de los síntomas cambia completamente la forma de afrontarlos.
+
+
+
+Cómo usar esta información
+
+La sección educativa puede consultarse en cualquier momento.
+
+Al pulsar una tarjeta, se abre el artículo correspondiente con imágenes y ejemplos prácticos.
+
+Puedes desplazarte:
+
+Adelante o atrás para pasar entre artículos.
+
+Atrás al menú principal con un solo toque.
+
+Todos los textos están diseñados para ser breves, concretos y accionables: lo que leas hoy, podrás aplicarlo mañana.
+
+MITIGA no pretende sustituir a las asociaciones o guías médicas, sino complementarlas con contenido verificado y directamente conectado a tu día a día.
+
+
+
+Soporte y ayuda
+
+MITIGA incluye un módulo dedicado al soporte técnico y de uso. 
+
+Está pensado para resolver dudas, comunicar incidencias o enviar sugerencias de mejora.
+
+Desde el menú principal, selecciona “Soporte y ayuda”, donde encontrarás dos opciones:
+
+Guía interactiva
+
+Puedes volver a ver el Recorrido Inicial (el recorrido de 7 pantallas).
+
+Te explica paso a paso cómo registrar, consultar y entender los datos de MITIGA.
+
+Ideal si llevas tiempo sin usar la app y quieres refrescar cómo funciona.
+
+Contacto técnico
+
+Selecciona el motivo de tu mensaje: duda, sugerencia o error.
+
+Escribe una descripción clara del problema o comentario.
+
+Pulsa Enviar.
+MITIGA abrirá automáticamente la aplicación de correo con un mensaje precompuesto, listo para enviar al equipo de soporte.
+Si intentas salir sin guardar, se mostrará una confirmación para evitar perder tu mensaje.
+
+Este canal directo con el equipo de MITIGA asegura que tus comentarios se lean y que las futuras versiones de la aplicación respondan mejor a las necesidades reales de los usuarios.
+
+
+
+En resumen, el bloque educativo y de soporte busca que MITIGA no sea solo una herramienta de registro, sino un compañero de aprendizaje y comunicación.
+
+Entender mejor la enfermedad y poder resolver tus dudas fácilmente hace que el cuidado sea más tranquilo, más seguro y más humano.
+
+
+
+
+Notas finales y consejos prácticos
+
+Llegados a este punto, ya conoces todas las funciones principales de MITIGA.
+
+Sin embargo, para aprovecharla al máximo conviene recordar algunas recomendaciones finales.
+
+Estas no son normas técnicas, sino sugerencias basadas en la experiencia de muchos cuidadores que ya la utilizan.
+
+
+
+Lo que MITIGA hace por ti
+
+Organiza la información dispersa.
+Todo lo que anotas —síntomas, medicación, incidencias— se guarda de manera estructurada y segura.
+
+Te libera de la memoria.
+No necesitas recordarlo todo: basta con registrar cuando algo cambia o te preocupa.
+
+Facilita la comunicación con el médico.
+Los informes PDF y los gráficos simplifican las consultas: menos tiempo explicando, más tiempo decidiendo.
+
+Fortalece el cuidado en casa.
+La combinación de registros, educación y planificación te permite anticiparte en lugar de reaccionar.
+
+MITIGA no sustituye al médico, pero le da al médico algo que hasta ahora no tenía: la mirada continua de quien está al lado del paciente todos los días.
+
+
+
+Consejos para el uso diario
+
+Registra sin obsesionarte.
+No hace falta hacerlo todos los días. Registra solo los cambios importantes o los momentos que te llamen la atención.
+
+Utiliza las notas libres.
+Si algo no encaja en las opciones del formulario, escríbelo.
+A veces un comentario breve puede ser el dato más revelador.
+
+Revisa los informes antes de cada cita médica.
+Los gráficos y resúmenes por fecha te ayudarán a contar mejor lo que ha ocurrido.
+
+Consulta la guía educativa cuando algo te inquiete.
+Muchas situaciones ya están descritas allí con consejos claros y realistas.
+
+Comparte el uso de MITIGA con otros cuidadores o familiares.
+Cuantos más ojos registren y comprendan la evolución, más equilibrado será el cuidado.
+
+Mantén los tratamientos actualizados.
+Si el médico cambia dosis o suspende un medicamento, actualízalo cuanto antes.
+Así los registros seguirán reflejando la realidad del tratamiento.
+
+Cuida también de ti.
+Recuerda que la carga emocional forma parte del proceso.
+El cuestionario Zarit no es un examen, sino una forma de medir tu bienestar.
+Si notas agotamiento, busca apoyo: hablarlo es parte del cuidado.
+
+
+
+Sincronización y seguridad de los datos
+
+ MITIGA sincroniza automáticamente la información con REDCap (plataforma de almacenamiento sanitario).
+
+Esto garantiza que:
+
+Tus datos estén protegidos.
+
+Las actualizaciones se reflejen en todos los módulos.
+
+Se conserven incluso si cambias de dispositivo.
+
+Cuando algo falla (por ejemplo, si hay un problema de conexión), la aplicación te avisará con un mensaje o “toast” para que puedas reintentar el envío.
+
+
+
+La prioridad de MITIGA es la seguridad de la información y la tranquilidad del usuario.
+
+
+
+Una última reflexión
+
+MITIGA no nació como una aplicación tecnológica, sino como una herramienta cuya finalidad es dar sentido a lo que pasa cada día en casa.
+
+Cada vez que registras algo, estás aportando conocimiento, ayudando al médico y, sobre todo, cuidando mejor.
+
+“Muchas veces, lo que no se sabe lo explica todo.”
+
+MITIGA existe para ayudarte a descubrir eso que todavía no se sabía, pero que marca la diferencia en el cuidado.
+
+
+
+
+
+FIN DEL MANUAL DE USUARIO MITIGA – Versión 2025 Actualizada
+
+© 2025 Servicio de Neurología del Hospital Universitario La Paz (IdiPAZ).+ Dekipling, S.L. 
+Todos los derechos reservados.
