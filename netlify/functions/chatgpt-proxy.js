@@ -1,61 +1,124 @@
-/* ==========================================================================
-   MITIGA Chatbot – Proxy seguro para Netlify Functions
-   --------------------------------------------------------------------------
-   Este archivo actúa como intermediario entre el front-end (script.js)
-   y la API de OpenAI. La clave API se guarda como variable protegida
-   en Netlify (OPENAI_API_KEY). También controla el modelo, temperatura
-   y longitud de las respuestas.
-   ========================================================================== */
+import fs from "fs";
+import path from "path";
+import OpenAI from "openai";
+import dotenv from "dotenv";
 
-import fetch from "node-fetch";
+dotenv.config();
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const embeddingsFile = path.join(process.cwd(), "referencias", "mitiga_embeddings.json");
 
-export async function handler(event) {
+/* --------------------------------------------------------------
+   Utilidades matemáticas
+-------------------------------------------------------------- */
+function dot(a, b) {
+  return a.reduce((sum, val, i) => sum + val * b[i], 0);
+}
+function magnitude(v) {
+  return Math.sqrt(v.reduce((sum, val) => sum + val * val, 0));
+}
+function cosineSimilarity(a, b) {
+  return dot(a, b) / (magnitude(a) * magnitude(b));
+}
+
+/* --------------------------------------------------------------
+   Buscar contexto más relevante (RAG local)
+-------------------------------------------------------------- */
+async function buscarContexto(pregunta) {
+  if (!fs.existsSync(embeddingsFile)) return "Base local no encontrada.";
+
+  const base = JSON.parse(fs.readFileSync(embeddingsFile, "utf8"));
+  const embPregunta = await openai.embeddings.create({
+    model: "text-embedding-3-small",
+    input: pregunta,
+  });
+  const vectorPregunta = embPregunta.data[0].embedding;
+
+  const puntuaciones = base.map((item) => ({
+    ...item,
+    score: cosineSimilarity(vectorPregunta, item.embedding),
+  }));
+
+  const top3 = puntuaciones.sort((a, b) => b.score - a.score).slice(0, 3);
+  return top3.map((r) => r.texto).join("\n");
+}
+
+/* --------------------------------------------------------------
+   Handler principal
+-------------------------------------------------------------- */
+export default async (req) => {
   try {
-    // Extrae el cuerpo del mensaje (prompt + usuario)
-    const body = JSON.parse(event.body || "{}");
-
-    // Clave API y modelo desde variables de entorno seguras
-    const apiKey = process.env.OPENAI_API_KEY;
-    const modelo = process.env.OPENAI_MODEL || "gpt-5-instant";
-
-    // Validación de seguridad
-    if (!apiKey) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({
-          error: "Falta la clave API. Define OPENAI_API_KEY en Netlify.",
-        }),
-      };
+    if (req.method !== "POST") {
+      return new Response(
+        JSON.stringify({ error: "Método no permitido" }),
+        { status: 405 }
+      );
     }
 
-    // Llamada segura a la API de OpenAI
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: modelo,
-        messages: body.messages,
-        temperature: 0.6, // nivel de creatividad (0 exacto, 1 más libre)
-        max_tokens: 600,  // longitud máxima de respuesta
-      }),
+    const { messages } = await req.json();
+    if (!messages || messages.length === 0) {
+      return new Response(
+        JSON.stringify({ error: "Faltan mensajes" }),
+        { status: 400 }
+      );
+    }
+
+    const pregunta = messages[messages.length - 1].content;
+    const contexto = await buscarContexto(pregunta);
+
+    const promptSistema = `
+Eres MITIGA, un asistente sociosanitario diseñado para acompañar a familias y cuidadores de personas con Alzheimer u otros deterioros cognitivos.
+
+🎯 Objetivo:
+Ayudar a observar, registrar y comprender los cambios que pueden influir en la evolución de la enfermedad, sin sustituir nunca la valoración médica.
+
+💬 Estilo:
+- Empático, sereno y claro.
+- Evita tecnicismos innecesarios.
+- Refuerza la idea de acompañamiento, no de autoridad.
+- Siempre que puedas, formula una o dos preguntas breves antes de ofrecer una explicación o recomendación.
+- Usa un tono positivo, orientado a la acción (“qué puedes hacer”, “qué observar”, “cómo prepararte”).
+- Trata de ser conciso, idealmente menos de 150 palabras por respuesta.
+- Si la pregunta no está relacionada con tu ámbito, responde educadamente que no puedes ayudar con ese tema.
+- Evita repetirte en tus respuestas o seguir siempre el mismo patrón.
+- Si la pregunta es muy amplia, pide que se concrete más.
+- Si no sabes la respuesta, admítelo honestamente.
+- Nunca ofrezcas diagnósticos médicos ni recomendaciones específicas de tratamiento farmacológico.
+
+📚 Contexto relevante (extraído de los documentos MITIGA):
+${contexto}
+    `;
+
+    const mensajes = [{ role: "system", content: promptSistema }, ...messages];
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: mensajes,
+      temperature: 0.7,
+      max_tokens: 900,
     });
 
-    const data = await response.text();
+    const respuesta =
+      completion.choices?.[0]?.message?.content ||
+      "No se pudo obtener respuesta de MITIGA.";
 
-    return {
-      statusCode: 200,
-      body: data,
-    };
-  } catch (error) {
-    console.error("❌ Error en proxy:", error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({
-        error: "Error interno del servidor (proxy MITIGA).",
+    return new Response(
+      JSON.stringify({
+        choices: [{ message: { content: respuesta } }],
       }),
-    };
+      { status: 200, headers: { "Content-Type": "application/json" } }
+    );
+  } catch (error) {
+    console.error("❌ Error en chatgpt-proxy:", {
+      message: error.message,
+      stack: error.stack,
+    });
+
+    return new Response(
+      JSON.stringify({
+        error: "Error interno en MITIGA proxy",
+        detalle: error.message,
+      }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
   }
-}
+};
