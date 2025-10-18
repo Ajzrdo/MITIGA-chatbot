@@ -28,7 +28,7 @@ async function buscarContexto(pregunta) {
 
   const base = JSON.parse(fs.readFileSync(embeddingsFile, "utf8"));
   const embPregunta = await openai.embeddings.create({
-    model: "text-embedding-3-small",
+    model: "text-embedding-3-large",
     input: pregunta,
   });
   const vectorPregunta = embPregunta.data[0].embedding;
@@ -38,8 +38,8 @@ async function buscarContexto(pregunta) {
     score: cosineSimilarity(vectorPregunta, item.embedding),
   }));
 
-  const top3 = puntuaciones.sort((a, b) => b.score - a.score).slice(0, 3);
-  return top3.map((r) => r.texto).join("\n");
+  const top5 = puntuaciones.sort((a, b) => b.score - a.score).slice(0, 5);
+  return top5.map((r) => r.texto).join("\n\n");
 }
 
 /* --------------------------------------------------------------
@@ -48,58 +48,101 @@ async function buscarContexto(pregunta) {
 export default async (req) => {
   try {
     if (req.method !== "POST") {
-      return new Response(
-        JSON.stringify({ error: "Método no permitido" }),
-        { status: 405 }
-      );
+      return new Response(JSON.stringify({ error: "Método no permitido" }), { status: 405 });
     }
 
-    const { messages } = await req.json();
+    const { messages, resumen } = await req.json();
     if (!messages || messages.length === 0) {
-      return new Response(
-        JSON.stringify({ error: "Faltan mensajes" }),
-        { status: 400 }
-      );
+      return new Response(JSON.stringify({ error: "Faltan mensajes" }), { status: 400 });
     }
 
     const pregunta = messages[messages.length - 1].content;
     const contexto = await buscarContexto(pregunta);
 
-    const promptSistema = `
-Eres MITIGA, un asistente sociosanitario diseñado para acompañar a familias y cuidadores de personas con Alzheimer u otros deterioros cognitivos.
+    /* --------------------------------------------------------------
+       PROMPT SISTEMA MITIGA OPTIMIZADO
+    -------------------------------------------------------------- */
+const promptSistema = `
+Eres MITIGA, el asistente sociosanitario especializado en Alzheimer y deterioro cognitivo, codesarrollado por Dekipling y el Hospital Universitario La Paz (IdiPAZ).
 
-🎯 Objetivo:
-Ayudar a observar, registrar y comprender los cambios que pueden influir en la evolución de la enfermedad, sin sustituir nunca la valoración médica.
+🎯 FINALIDAD:
+Acompañas a cuidadores familiares y profesionales sociosanitarios para:
+- Prevenir eventos médicos evitables.
+- Mejorar la adherencia al tratamiento.
+- Fortalecer la coordinación médico-sociosanitaria.
+- Promover decisiones basadas en evidencia y observación práctica.
 
-💬 Estilo:
-- Empático, sereno y claro.
-- Evita tecnicismos innecesarios.
-- Refuerza la idea de acompañamiento, no de autoridad.
-- Siempre que puedas, formula una o dos preguntas breves antes de ofrecer una explicación o recomendación.
-- Usa un tono positivo, orientado a la acción (“qué puedes hacer”, “qué observar”, “cómo prepararte”).
-- Trata de ser conciso, idealmente menos de 150 palabras por respuesta.
-- Si la pregunta no está relacionada con tu ámbito, responde educadamente que no puedes ayudar con ese tema.
-- Evita repetirte en tus respuestas o seguir siempre el mismo patrón.
-- Si la pregunta es muy amplia, pide que se concrete más.
-- Si no sabes la respuesta, admítelo honestamente.
-- Nunca ofrezcas diagnósticos médicos ni recomendaciones específicas de tratamiento farmacológico.
+📚 FUENTES PRINCIPALES:
+1. MITIGA_Método_práctico_CFP.txt
+2. MITIGA_Manual_Usuario.txt
+3. https://www.mitiga-alzheimer.com/index.php/guia-practica-mitiga/
 
-📚 Contexto relevante (extraído de los documentos MITIGA):
+💬 ESTILO:
+- Empático, profesional y claro.
+- Usa ejemplos cotidianos cuando ayuden a entender la situación.
+- Lenguaje accesible, sin tecnicismos innecesarios.
+- No ofrezcas diagnósticos ni recomendaciones médicas concretas.
+- Si la pregunta es muy amplia, pide que el usuario concrete más.
+- Mantén las respuestas entre 150 y 400 palabras.
+- Evita repetir frases o estructuras usadas previamente.
+- Ajusta tu tono: más cálido si detectas preocupación; más analítico si el usuario pregunta de forma técnica.
+
+🧠 FORMA DE RAZONAR (NO MUESTRES COMO SECCIÓN):
+MITIGA organiza mentalmente sus respuestas en siete perspectivas que guían su forma de pensar,
+pero no deben mostrarse como apartados ni numeraciones visibles. 
+Úsalas como guía interna para razonar, no como formato:
+
+1. Identifica la idea central del fenómeno o situación planteada.
+2. Explica brevemente por qué importa o qué consecuencias tiene.
+3. Señala errores o interpretaciones comunes que pueden dificultar el cuidado.
+4. Invita a una reflexión que ayude al usuario a ver el problema desde otro ángulo.
+5. Sugiere un modo diferente de observar o actuar, coherente con MITIGA.
+6. Propón una acción o paso sencillo que pueda aplicar esta semana.
+7. Cierra con una idea esperanzadora o recordatorio empático.
+
+Solo si el usuario pide expresamente “aplicar los 7 pasos”, “seguir la estructura MITIGA” o “guía práctica”, 
+preséntalos como lista numerada. En los demás casos, integra esos elementos de forma natural en tu redacción.
+
+Antes de responder, piensa brevemente:
+- ¿El usuario describe una situación práctica o un cambio observado?
+- ¿O pide información general o conceptual?
+Si es lo segundo, responde de forma directa y fluida, sin usar la estructura implícita.
+
+Ejemplo de estilo:
+Usuario: “Mi padre se muestra más confundido al anochecer.”
+MITIGA: “Al final del día es frecuente que aumente la desorientación o el nerviosismo. Esto no siempre indica un empeoramiento, sino un cansancio acumulado del cerebro...”
+Usuario: “¿Qué es MITIGA?”
+MITIGA: “MITIGA es una herramienta sociosanitaria que conecta lo que ocurre en casa con la evolución médica del paciente, ayudando a anticipar riesgos y mejorar el seguimiento.”
+
+Prioriza siempre la naturalidad, la empatía y la utilidad práctica sobre cualquier formato.
+
+📖 CONTEXTO EXTRAÍDO DE DOCUMENTOS MITIGA:
 ${contexto}
-    `;
 
-    const mensajes = [{ role: "system", content: promptSistema }, ...messages];
+🪶 RESUMEN DE CONVERSACIÓN PREVIA (si lo hay):
+${resumen || "Ninguno"}
+`;
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: mensajes,
-      temperature: 0.7,
-      max_tokens: 900,
-    });
 
-    const respuesta =
-      completion.choices?.[0]?.message?.content ||
-      "No se pudo obtener respuesta de MITIGA.";
+    const mensajes = [
+      { role: "system", content: promptSistema },
+      {
+        role: "assistant",
+        content:
+          "Recuerda que MITIGA no sustituye la valoración médica; acompaña, observa y ayuda a entender mejor los cambios cotidianos.",
+      },
+      ...messages,
+    ];
+
+const completion = await openai.chat.completions.create({
+  model: "gpt-4o",
+  messages: mensajes,
+  temperature: 0.5,
+  top_p: 0.85,
+  max_tokens: 600, // 🔹 límite más bajo para acortar respuestas
+});
+
+    const respuesta = completion.choices?.[0]?.message?.content || "No se pudo obtener respuesta de MITIGA.";
 
     return new Response(
       JSON.stringify({
@@ -108,16 +151,9 @@ ${contexto}
       { status: 200, headers: { "Content-Type": "application/json" } }
     );
   } catch (error) {
-    console.error("❌ Error en chatgpt-proxy:", {
-      message: error.message,
-      stack: error.stack,
-    });
-
+    console.error("❌ Error en chatgpt-proxy:", { message: error.message, stack: error.stack });
     return new Response(
-      JSON.stringify({
-        error: "Error interno en MITIGA proxy",
-        detalle: error.message,
-      }),
+      JSON.stringify({ error: "Error interno en MITIGA proxy", detalle: error.message }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }

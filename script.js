@@ -23,7 +23,6 @@ userInput.addEventListener("input", ocultarPantallaInicio);
 // INICIALIZACIÓN
 // ---------------------------
 window.addEventListener("DOMContentLoaded", () => {
-  // Modal
   const modal = document.getElementById("modal");
   const confirmButton = document.getElementById("confirmButton");
   const cancelButton = document.getElementById("cancelButton");
@@ -56,7 +55,6 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Cargar historial guardado
   if (conversationHistory.length > 0) {
     conversationHistory.forEach((msg) => {
       appendMessage(msg.content, msg.role === "user" ? "user" : "bot");
@@ -81,20 +79,30 @@ async function sendMessage() {
   conversationHistory.push({ role: "user", content: userText });
   localStorage.setItem("conversationHistory", JSON.stringify(conversationHistory));
 
+  // 🔹 Limitar historial a últimas 6 interacciones
+  const MAX_HISTORY = 6;
+  conversationHistory = conversationHistory.slice(-MAX_HISTORY);
+
+  // 🔹 Crear resumen breve de la conversación previa
+  const resumen = conversationHistory
+    .filter((m) => m.role !== "system")
+    .slice(0, -1)
+    .map((m) => `${m.role === "user" ? "U:" : "M:"} ${m.content}`)
+    .join(" ")
+    .slice(-800);
+
   try {
     const res = await fetch(API_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages: conversationHistory }),
+      body: JSON.stringify({ resumen, messages: conversationHistory }),
     });
     const data = await res.json();
 
     typingIndicator.classList.remove("show");
     typingIndicator.classList.add("hidden");
 
-    const botText =
-      data?.choices?.[0]?.message?.content ||
-      "No se pudo obtener respuesta de MITIGA.";
+    const botText = data?.choices?.[0]?.message?.content || "No se pudo obtener respuesta de MITIGA.";
 
     conversationHistory.push({ role: "assistant", content: botText });
     localStorage.setItem("conversationHistory", JSON.stringify(conversationHistory));
@@ -138,8 +146,8 @@ function appendMessage(text, sender = "bot") {
 }
 
 async function appendMessageGradual(text, sender = "bot") {
-  const partes = text.split(/(?<=\.)\s+(?=¿)/g).map((t) => t.trim()).filter(Boolean);
-  for (const parte of partes) {
+  const frases = text.split(/(?<=\.)\s+(?=[A-ZÁÉÍÓÚ¿])/g).map((t) => t.trim()).filter(Boolean);
+  for (const frase of frases) {
     const block = document.createElement("div");
     block.classList.add("message", sender);
     if (sender === "bot") {
@@ -153,9 +161,8 @@ async function appendMessageGradual(text, sender = "bot") {
     block.appendChild(content);
     chatMessages.appendChild(block);
     chatMessages.scrollTop = chatMessages.scrollHeight;
-
-    await mostrarGradualmente(content, formatRichText(parte));
-    await new Promise((r) => setTimeout(r, 400));
+    await mostrarGradualmente(content, formatRichText(frase));
+    await new Promise((r) => setTimeout(r, 300));
   }
 }
 
@@ -182,6 +189,7 @@ function mostrarGradualmente(element, htmlText) {
 function formatRichText(text) {
   return text
     .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>")
+    .replace(/^#{1,3}\s?(.*)$/gm, "<h4>$1</h4>")
     .replace(/(^|\n)- (.*?)(?=\n|$)/g, "<ul><li>$2</li></ul>")
     .replace(/\n/g, "<br>");
 }
