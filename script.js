@@ -6,9 +6,9 @@ const typingIndicator = document.getElementById("typingIndicator");
 const startScreen = document.getElementById("start-screen");
 let conversationHistory = JSON.parse(localStorage.getItem("conversationHistory")) || [];
 
-// ---------------------------
-// EVENTOS
-// ---------------------------
+/* --------------------------------------------------------------
+   EVENTOS PRINCIPALES
+-------------------------------------------------------------- */
 sendButton.addEventListener("click", sendMessage);
 userInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter" && !e.shiftKey) {
@@ -19,9 +19,9 @@ userInput.addEventListener("keydown", (e) => {
 userInput.addEventListener("focus", ocultarPantallaInicio);
 userInput.addEventListener("input", ocultarPantallaInicio);
 
-// ---------------------------
-// INICIALIZACIÓN
-// ---------------------------
+/* --------------------------------------------------------------
+   INICIALIZACIÓN DE LA PANTALLA
+-------------------------------------------------------------- */
 window.addEventListener("DOMContentLoaded", () => {
   const modal = document.getElementById("modal");
   const confirmButton = document.getElementById("confirmButton");
@@ -43,7 +43,7 @@ window.addEventListener("DOMContentLoaded", () => {
         chatMessages.innerHTML = "";
         conversationHistory = [];
         localStorage.removeItem("conversationHistory");
-        appendMessageGradual("¿Qué cambio reciente te gustaría comentar o entender mejor?", "bot");
+        appendMessageGradual("Hola 👋 Soy MITIGA. ¿Qué cambio o situación reciente te gustaría analizar hoy?", "bot");
       }, 300);
     });
   }
@@ -55,6 +55,7 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // Cargar historial previo
   if (conversationHistory.length > 0) {
     conversationHistory.forEach((msg) => {
       appendMessage(msg.content, msg.role === "user" ? "user" : "bot");
@@ -62,9 +63,9 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-// ---------------------------
-// ENVIAR MENSAJE
-// ---------------------------
+/* --------------------------------------------------------------
+   ENVÍO DE MENSAJE
+-------------------------------------------------------------- */
 async function sendMessage() {
   const userText = userInput.value.trim();
   if (!userText) return;
@@ -79,30 +80,23 @@ async function sendMessage() {
   conversationHistory.push({ role: "user", content: userText });
   localStorage.setItem("conversationHistory", JSON.stringify(conversationHistory));
 
-  // 🔹 Limitar historial a últimas 6 interacciones
+  // 🔹 Limitar el historial para evitar exceso de tokens
   const MAX_HISTORY = 6;
   conversationHistory = conversationHistory.slice(-MAX_HISTORY);
-
-  // 🔹 Crear resumen breve de la conversación previa
-  const resumen = conversationHistory
-    .filter((m) => m.role !== "system")
-    .slice(0, -1)
-    .map((m) => `${m.role === "user" ? "U:" : "M:"} ${m.content}`)
-    .join(" ")
-    .slice(-800);
 
   try {
     const res = await fetch(API_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ resumen, messages: conversationHistory }),
+      body: JSON.stringify({ messages: conversationHistory }),
     });
-    const data = await res.json();
 
+    const data = await res.json();
     typingIndicator.classList.remove("show");
     typingIndicator.classList.add("hidden");
 
-    const botText = data?.choices?.[0]?.message?.content || "No se pudo obtener respuesta de MITIGA.";
+    const botText =
+      data?.choices?.[0]?.message?.content || "No se pudo obtener respuesta de MITIGA.";
 
     conversationHistory.push({ role: "assistant", content: botText });
     localStorage.setItem("conversationHistory", JSON.stringify(conversationHistory));
@@ -116,9 +110,9 @@ async function sendMessage() {
   }
 }
 
-// ---------------------------
-// UTILIDADES
-// ---------------------------
+/* --------------------------------------------------------------
+   UTILIDADES DE INTERFAZ
+-------------------------------------------------------------- */
 function ocultarPantallaInicio() {
   if (startScreen) {
     startScreen.classList.add("hidden");
@@ -126,6 +120,9 @@ function ocultarPantallaInicio() {
   }
 }
 
+/* --------------------------------------------------------------
+   GESTIÓN DE MENSAJES
+-------------------------------------------------------------- */
 function appendMessage(text, sender = "bot") {
   const block = document.createElement("div");
   block.classList.add("message", sender);
@@ -133,7 +130,10 @@ function appendMessage(text, sender = "bot") {
   if (sender === "bot") {
     const header = document.createElement("div");
     header.classList.add("bot-header");
-    header.innerHTML = `<img src="images/mitiga-icon.png" alt="MITIGA" /><span>MITIGA</span>`;
+    header.innerHTML = `
+      <img src="images/mitiga-icon.png" alt="MITIGA" />
+      <span>MITIGA</span>
+    `;
     block.appendChild(header);
   }
 
@@ -142,28 +142,50 @@ function appendMessage(text, sender = "bot") {
   content.innerHTML = formatRichText(text);
   block.appendChild(content);
   chatMessages.appendChild(block);
+
+  // Auto-scroll
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
+/* --------------------------------------------------------------
+   EFECTO DE ESCRITURA GRADUAL
+-------------------------------------------------------------- */
 async function appendMessageGradual(text, sender = "bot") {
-  const frases = text.split(/(?<=\.)\s+(?=[A-ZÁÉÍÓÚ¿])/g).map((t) => t.trim()).filter(Boolean);
-  for (const frase of frases) {
+  const partes = dividirTextoNatural(text);
+  for (const parte of partes) {
     const block = document.createElement("div");
     block.classList.add("message", sender);
+
     if (sender === "bot") {
       const header = document.createElement("div");
       header.classList.add("bot-header");
-      header.innerHTML = `<img src="images/mitiga-icon.png" alt="MITIGA" /><span>MITIGA</span>`;
+      header.innerHTML = `
+        <img src="images/mitiga-icon.png" alt="MITIGA" />
+        <span>MITIGA</span>
+      `;
       block.appendChild(header);
     }
+
     const content = document.createElement("div");
     content.classList.add("message-content");
     block.appendChild(content);
     chatMessages.appendChild(block);
     chatMessages.scrollTop = chatMessages.scrollHeight;
-    await mostrarGradualmente(content, formatRichText(frase));
-    await new Promise((r) => setTimeout(r, 300));
+
+    await mostrarGradualmente(content, formatRichText(parte));
+    await new Promise((r) => setTimeout(r, 250));
   }
+}
+
+/* --------------------------------------------------------------
+   UTILIDADES DE FORMATO Y DIVISIÓN DE TEXTO
+-------------------------------------------------------------- */
+function dividirTextoNatural(text) {
+  // Divide en frases largas o párrafos, sin romper frases cortas.
+  return text
+    .split(/(?<=[.!?])\s+(?=[A-ZÁÉÍÓÚ¿])/g)
+    .map((t) => t.trim())
+    .filter(Boolean);
 }
 
 function mostrarGradualmente(element, htmlText) {
@@ -173,6 +195,7 @@ function mostrarGradualmente(element, htmlText) {
     const plainText = tempDiv.textContent || tempDiv.innerText || "";
     let i = 0;
     element.innerHTML = "";
+
     const interval = setInterval(() => {
       if (i < plainText.length) {
         element.innerHTML = plainText.slice(0, i) + "▋";
@@ -187,9 +210,9 @@ function mostrarGradualmente(element, htmlText) {
 }
 
 function formatRichText(text) {
+  // Permite negritas, viñetas naturales y saltos de línea.
   return text
     .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>")
-    .replace(/^#{1,3}\s?(.*)$/gm, "<h4>$1</h4>")
     .replace(/(^|\n)- (.*?)(?=\n|$)/g, "<ul><li>$2</li></ul>")
     .replace(/\n/g, "<br>");
 }

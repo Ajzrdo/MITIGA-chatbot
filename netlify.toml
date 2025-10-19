@@ -1,0 +1,13 @@
+[build]
+  publish = "."
+  functions = "netlify/functions"
+  command = "npm install"
+
+[functions]
+  node_bundler = "esbuild"
+  included_files = ["referencias/**"]
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

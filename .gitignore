@@ -1,7 +1,25 @@
-# Local Netlify folder
-.netlify
+# Node y dependencias
 node_modules/
+package-lock.json
+npm-debug.log*
+yarn-error.log*
+
+# Netlify
+.netlify/
 dist/
+build/
+
+# Archivos locales o sensibles
 .env
-.vscode/
 .DS_Store
+.vscode/
+.idea/
+
+# Archivos de respaldo o temporales
+*.bak
+*.tmp
+*.swp
+
+# Logs
+*.log
+logs/
