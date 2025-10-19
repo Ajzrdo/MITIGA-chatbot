@@ -6,6 +6,14 @@ const typingIndicator = document.getElementById("typingIndicator");
 const startScreen = document.getElementById("start-screen");
 let conversationHistory = JSON.parse(localStorage.getItem("conversationHistory")) || [];
 
+function insertBeforeIndicator(block) {
+  if (typingIndicator && typingIndicator.parentElement === chatMessages) {
+    chatMessages.insertBefore(block, typingIndicator);
+  } else {
+    chatMessages.appendChild(block);
+  }
+}
+
 /* --------------------------------------------------------------
    EVENTOS PRINCIPALES
 -------------------------------------------------------------- */
@@ -40,7 +48,12 @@ window.addEventListener("DOMContentLoaded", () => {
       modal.classList.remove("show");
       setTimeout(() => {
         modal.classList.add("hidden");
-        chatMessages.innerHTML = "";
+        Array.from(chatMessages.querySelectorAll(".message")).forEach((node) =>
+          node.remove()
+        );
+        if (typingIndicator && !chatMessages.contains(typingIndicator)) {
+          chatMessages.appendChild(typingIndicator);
+        }
         conversationHistory = [];
         localStorage.removeItem("conversationHistory");
         appendMessageGradual("Hola 👋 Soy MITIGA. ¿Qué cambio o situación reciente te gustaría analizar hoy?", "bot");
@@ -76,6 +89,7 @@ async function sendMessage() {
 
   typingIndicator.classList.remove("hidden");
   typingIndicator.classList.add("show");
+  chatMessages.scrollTop = chatMessages.scrollHeight;
 
   conversationHistory.push({ role: "user", content: userText });
   localStorage.setItem("conversationHistory", JSON.stringify(conversationHistory));
@@ -123,25 +137,30 @@ function ocultarPantallaInicio() {
 /* --------------------------------------------------------------
    GESTIÓN DE MENSAJES
 -------------------------------------------------------------- */
+function createBotHeader() {
+  const header = document.createElement("div");
+  header.classList.add("bot-header");
+  header.innerHTML = `
+    <img src="images/mitiga-icon.png" alt="MITIGA" />
+    <span>MITIGA</span>
+  `;
+  return header;
+}
+
 function appendMessage(text, sender = "bot") {
   const block = document.createElement("div");
   block.classList.add("message", sender);
 
   if (sender === "bot") {
-    const header = document.createElement("div");
-    header.classList.add("bot-header");
-    header.innerHTML = `
-      <img src="images/mitiga-icon.png" alt="MITIGA" />
-      <span>MITIGA</span>
-    `;
-    block.appendChild(header);
+    block.classList.add("has-header");
+    block.appendChild(createBotHeader());
   }
 
   const content = document.createElement("div");
   content.classList.add("message-content");
   content.innerHTML = formatRichText(text);
   block.appendChild(content);
-  chatMessages.appendChild(block);
+  insertBeforeIndicator(block);
 
   // Auto-scroll
   chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -152,24 +171,21 @@ function appendMessage(text, sender = "bot") {
 -------------------------------------------------------------- */
 async function appendMessageGradual(text, sender = "bot") {
   const partes = dividirTextoNatural(text);
+  let esPrimerBloque = true;
   for (const parte of partes) {
     const block = document.createElement("div");
     block.classList.add("message", sender);
 
-    if (sender === "bot") {
-      const header = document.createElement("div");
-      header.classList.add("bot-header");
-      header.innerHTML = `
-        <img src="images/mitiga-icon.png" alt="MITIGA" />
-        <span>MITIGA</span>
-      `;
-      block.appendChild(header);
+    if (sender === "bot" && esPrimerBloque) {
+      block.classList.add("has-header");
+      block.appendChild(createBotHeader());
+      esPrimerBloque = false;
     }
 
     const content = document.createElement("div");
     content.classList.add("message-content");
     block.appendChild(content);
-    chatMessages.appendChild(block);
+    insertBeforeIndicator(block);
     chatMessages.scrollTop = chatMessages.scrollHeight;
 
     await mostrarGradualmente(content, formatRichText(parte));
