@@ -1,10 +1,20 @@
 const API_URL = "/.netlify/functions/chatgpt-proxy";
+const REQUEST_TIMEOUT_MS = 45000;
 const chatMessages = document.getElementById("chatMessages");
 const userInput = document.getElementById("userInput");
 const sendButton = document.getElementById("sendButton");
 const typingIndicator = document.getElementById("typingIndicator");
 const startScreen = document.getElementById("start-screen");
-let conversationHistory = JSON.parse(localStorage.getItem("conversationHistory")) || [];
+let conversationHistory = [];
+let activeRequestController = null;
+
+try {
+  const storedHistory = localStorage.getItem("conversationHistory");
+  conversationHistory = storedHistory ? JSON.parse(storedHistory) : [];
+} catch (error) {
+  console.warn("⚠️ Historial de conversación corrupto. Se reinicia.", error);
+  localStorage.removeItem("conversationHistory");
+}
 
 function insertBeforeIndicator(block) {
   if (typingIndicator && typingIndicator.parentElement === chatMessages) {
@@ -83,6 +93,10 @@ async function sendMessage() {
   const userText = userInput.value.trim();
   if (!userText) return;
 
+  if (sendButton.disabled) {
+    return;
+  }
+
   appendMessage(userText, "user");
   userInput.value = "";
   ocultarPantallaInicio();
@@ -98,12 +112,33 @@ async function sendMessage() {
   const MAX_HISTORY = 6;
   conversationHistory = conversationHistory.slice(-MAX_HISTORY);
 
+  let timeoutId;
+
   try {
+    sendButton.disabled = true;
+
+    if (activeRequestController) {
+      activeRequestController.abort();
+    }
+
+    const controller = new AbortController();
+    activeRequestController = controller;
+    timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
     const res = await fetch(API_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ messages: conversationHistory }),
+      signal: controller.signal,
     });
+
+    clearTimeout(timeoutId);
+    timeoutId = null;
+    activeRequestController = null;
+
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
 
     const data = await res.json();
     typingIndicator.classList.remove("show");
@@ -117,10 +152,20 @@ async function sendMessage() {
 
     await appendMessageGradual(botText, "bot");
   } catch (error) {
+    const isAbortError = error.name === "AbortError";
     console.error("❌ Error al conectar con MITIGA:", error);
     typingIndicator.classList.remove("show");
     typingIndicator.classList.add("hidden");
-    appendMessage("Error al conectar con MITIGA. Intenta nuevamente.", "bot");
+    const errorMessage = isAbortError
+      ? "La solicitud tardó demasiado y se canceló. Intenta nuevamente."
+      : "Error al conectar con MITIGA. Intenta nuevamente.";
+    appendMessage(errorMessage, "bot");
+  } finally {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+    activeRequestController = null;
+    sendButton.disabled = false;
   }
 }
 
