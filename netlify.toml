@@ -1,3 +1,7 @@
+# ────────────────────────────────────────────────
+# CONFIGURACIÓN PARA MITIGA PRO (6 CAPAS)
+# ────────────────────────────────────────────────
+
 [build]
   publish = "."
   functions = "netlify/functions"
@@ -5,7 +9,13 @@
 
 [functions]
   node_bundler = "esbuild"
-  included_files = ["referencias/**"]
+
+  # ❗ Incluir los JSON EXACTOS que la función usa
+  included_files = [
+    "netlify/functions/mitiga_embeddings.json",
+    "netlify/functions/referencias.json",
+    "netlify/functions/*.json"
+  ]
 
 [[redirects]]
   from = "/*"
