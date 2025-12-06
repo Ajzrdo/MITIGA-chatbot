@@ -1,154 +1,137 @@
-import fs from "fs";
-import path from "path";
+// netlify/functions/chatgpt-proxy.js
 import OpenAI from "openai";
-import dotenv from "dotenv";
 
-dotenv.config();
-
-// Cliente OpenAI NUEVO SDK (correcto)
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-// Ruta embeddings
-const embeddingsFile = path.join(process.cwd(), "referencias", "mitiga_embeddings.json");
-
-/* --------------------------------------------------------------
-   UTILIDADES
--------------------------------------------------------------- */
-function dot(a, b) {
-  return a.reduce((sum, val, i) => sum + val * b[i], 0);
-}
-function magnitude(v) {
-  return Math.sqrt(v.reduce((sum, val, i) => sum + val * val, 0));
-}
-function cosineSimilarity(a, b) {
-  return dot(a, b) / (magnitude(a) * magnitude(b));
-}
-
-/* --------------------------------------------------------------
-   BUSCAR CONTEXTO (RAG) – con fallback seguro
--------------------------------------------------------------- */
-async function buscarContexto(pregunta) {
+export const handler = async (event) => {
   try {
-    if (!fs.existsSync(embeddingsFile)) return "";
+    if (event.httpMethod !== "POST") {
+      return {
+        statusCode: 405,
+        body: JSON.stringify({ error: "Método no permitido" }),
+      };
+    }
 
-    const base = JSON.parse(fs.readFileSync(embeddingsFile, "utf8"));
-    if (!Array.isArray(base) || base.length === 0) return "";
-
-    const embedding = await client.embeddings.create({
-      model: "text-embedding-3-small",
-      input: pregunta,
+    const client = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
     });
 
-    const vector = embedding.data[0].embedding;
+    const body = JSON.parse(event.body || "{}");
+    const userMessages = body.messages || [];
+    const ultimaPregunta = userMessages[userMessages.length - 1]?.content || "";
 
-    const scores = base.map((item) => ({
-      ...item,
-      score: cosineSimilarity(vector, item.embedding),
-    }));
-
-    return scores
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 5)
-      .map((x) => x.texto)
-      .join("\n\n");
-
-  } catch (err) {
-    console.error("⚠️ Error en RAG:", err.message);
-    return ""; // Fallback limpio
-  }
-}
-
-/* --------------------------------------------------------------
-   MEMORIA MITIGA
--------------------------------------------------------------- */
-function generarMemoriaSimulada() {
-  return `
-MEMORIA_SIMULADA:
-- Paciente: fase inicial/intermedia (estimado)
-- Riesgos activos: adherencia, entorno, irritabilidad, carga del cuidador
-- Hipótesis MITIGA: revisar desencadenantes ambientales, fatiga, cambios recientes
-`.trim();
-}
-
-/* --------------------------------------------------------------
-   HANDLER PRINCIPAL – Netlify Function
--------------------------------------------------------------- */
-export default async (req) => {
-  try {
-    if (req.method !== "POST") {
-      return new Response(JSON.stringify({ error: "Método no permitido" }), {
-        status: 405,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    // Asegurar parsing estable
-    let body;
-    try {
-      body = await req.json();
-    } catch (e) {
-      return new Response(JSON.stringify({ error: "JSON inválido" }), {
-        status: 400,
-      });
-    }
-
-    const { messages } = body;
-    if (!messages || !Array.isArray(messages)) {
-      return new Response(JSON.stringify({ error: "Faltan mensajes" }), {
-        status: 400,
-      });
-    }
-
-    const pregunta = messages[messages.length - 1]?.content || "";
-
-    const contexto = await buscarContexto(pregunta);
-    const memoria = generarMemoriaSimulada();
-
-    /* ----------------------------------------------------------
-       SYSTEM PROMPT MITIGA — COMPLETO
-    ---------------------------------------------------------- */
+    // -------------------------------------------------------------
+    // 6 CAPAS MITIGA PRO — TODO integrado sin RAG
+    // -------------------------------------------------------------
     const systemPrompt = `
-Eres el Asistente MITIGA…
-[El resto de tu prompt aquí SIN CAMBIOS]
-${memoria}
+Eres el Asistente MITIGA, un asistente sociosanitario avanzado especializado 
+en deterioro cognitivo y enfermedad de Alzheimer en etapas iniciales e intermedias.
 
-CONTEXTO_RELEVANTE:
-${contexto}
-`;
+────────────────────────────
+CAPA 1 — ROL CLÍNICO SOCIOSANITARIO MITIGA
+────────────────────────────
+Tu función es ayudar a familias, cuidadores, profesionales sociosanitarios y médicos
+a interpretar síntomas, entender comportamientos, anticipar riesgos y orientar acciones
+que reduzcan Eventos Médicos Evitables (EMEs):  
+- caídas  
+- deshidratación  
+- problemas de adherencia  
+- alteraciones conductuales  
+- infecciones  
+- noches sin dormir  
+- descompensaciones  
+- crisis del cuidador  
 
-    const mensajes = [
+NO diagnosticas. NO alarmas.  
+Siempre respondes con evidencia divulgativa, lenguaje claro y orientación práctica inmediata.
+
+────────────────────────────
+CAPA 2 — INSTRUCTION BLENDING
+────────────────────────────
+Integra simultáneamente:
+- el contexto general MITIGA
+- la situación planteada en la pregunta del usuario
+- las reglas clínicas y sociosanitarias
+- las mejores prácticas de comunicación con familias
+- los criterios de seguridad emocional y ética MITIGA
+
+────────────────────────────
+CAPA 3 — CONTEXT SCAFFOLDING
+────────────────────────────
+Trabaja como si tuvieras esta información de referencia (sin almacenarla jamás):
+• Paciente tipo: deterioro leve-moderado  
+• Riesgos relevantes: adherencia, entorno, irritabilidad, fatiga del cuidador  
+• Entorno típico: convivencia en domicilio, rutina variable, cambios recientes  
+• Objetivo MITIGA: reducir EMEs, anticipar problemas, mejorar convivencia y carga del cuidador.
+
+────────────────────────────
+CAPA 4 — META-RAZONAMIENTO
+────────────────────────────
+Antes de responder:
+1. Analiza la situación con lógica clínica.  
+2. Identifica riesgos potenciales.  
+3. Separa causas posibles (contexto, medicación, entorno, sueño, estímulos).  
+4. Propón acciones prácticas que puedan hacerse HOY.  
+5. Valora cuándo es prudente contactar al profesional.
+
+────────────────────────────
+CAPA 5 — MEMORIA SIMULADA (NO REAL)
+────────────────────────────
+Actúa como si recordaras:
+- factores desencadenantes comunes
+- estrategias previas que suelen funcionar
+- patrones clínicos típicos del deterioro cognitivo
+Pero NO almacenes nada del usuario. NO retengas información real.
+
+────────────────────────────
+CAPA 6 — GUARDAILS Y ESTILO MITIGA
+────────────────────────────
+Responde SIEMPRE con:
+• claridad  
+• empatía  
+• brevedad inteligente  
+• orientación práctica  
+• seguridad clínica  
+• mensajes accionables  
+• tono humano, cálido, profesional  
+
+Si te preguntan algo fuera del ámbito MITIGA, deriva suavemente.
+
+────────────────────────────
+FIN DEL SISTEMA
+────────────────────────────
+
+Pregunta del usuario:
+"${ultimaPregunta}"
+`.trim();
+
+    const messages = [
       { role: "system", content: systemPrompt },
-      ...messages,
+      ...userMessages,
     ];
 
-    /* ----------------------------------------------------------
-       LLAMADA AL NUEVO SDK DE OPENAI 100% CORRECTA
-    ---------------------------------------------------------- */
     const completion = await client.chat.completions.create({
-      model: "gpt-4o-mini",     // usa mini o gpt-4o, ambos válidos
-      messages: mensajes,
-      temperature: 0.45,
-      top_p: 0.85,
-      max_tokens: 750,
+      model: "gpt-4o-mini",
+      messages,
+      temperature: 0.55,
+      max_tokens: 650,
     });
 
-    const respuesta = completion.choices?.[0]?.message?.content || "No se obtuvo respuesta.";
+    const respuesta = completion.choices?.[0]?.message?.content || "";
 
-    return new Response(
-      JSON.stringify({ choices: [{ message: { content: respuesta } }] }),
-      { status: 200, headers: { "Content-Type": "application/json" } }
-    );
+    return {
+      statusCode: 200,
+      body: JSON.stringify({
+        respuesta,
+        source: "MITIGA PRO — 6 CAPAS — sin RAG",
+      }),
+    };
 
   } catch (err) {
-    console.error("❌ ERROR MITIGA-PROXY:", err.message, err.stack);
-    return new Response(
-      JSON.stringify({
-        error: "Error interno en MITIGA proxy",
+    return {
+      statusCode: 500,
+      body: JSON.stringify({
+        error: "Error interno en MITIGA PRO",
         detalle: err.message,
       }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
+    };
   }
 };
