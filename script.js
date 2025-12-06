@@ -1,4 +1,4 @@
-const API_URL = "/.netlify/functions/chatgpt-proxy";
+const API_URL = "/.netlify/functions/chatgpt-proxy-v2";
 const REQUEST_TIMEOUT_MS = 45000;
 const chatMessages = document.getElementById("chatMessages");
 const userInput = document.getElementById("userInput");

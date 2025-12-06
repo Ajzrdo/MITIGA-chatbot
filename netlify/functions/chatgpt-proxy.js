@@ -28,7 +28,7 @@ async function buscarContexto(pregunta) {
 
   const base = JSON.parse(fs.readFileSync(embeddingsFile, "utf8"));
   const embPregunta = await openai.embeddings.create({
-    model: "text-embedding-3-large",
+    model: "text-embedding-3-small",
     input: pregunta,
   });
   const vectorPregunta = embPregunta.data[0].embedding;
