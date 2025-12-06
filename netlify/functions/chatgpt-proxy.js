@@ -1,178 +1,171 @@
-// netlify/functions/chatgpt-proxy.js
-
 import OpenAI from "openai";
-import fs from "fs";
-import path from "path";
+import referencias from "../../referencias/referencias.json";
+import embeddingsData from "./mitiga_embeddings.json";
 
-// -------------------------------------------------------------
-// CONFIG
-// -------------------------------------------------------------
-const EMBEDDINGS_PATH = "./netlify/functions/mitiga_embeddings.json";
-let EMBEDDINGS = [];
-
-// Cargar embeddings precomputados
-try {
-  const raw = fs.readFileSync(EMBEDDINGS_PATH, "utf8");
-  EMBEDDINGS = JSON.parse(raw);
-  console.log("Embeddings cargados:", EMBEDDINGS.length);
-} catch (e) {
-  console.warn("No se pudo cargar mitiga_embeddings.json");
-  EMBEDDINGS = [];
-}
-
-// Función distancia coseno (para comparar embeddings)
-function cosineSimilarity(a, b) {
-  let dot = 0.0;
-  let na = 0.0;
-  let nb = 0.0;
-
-  for (let i = 0; i < a.length; i++) {
-    dot += a[i] * b[i];
-    na += a[i] * a[i];
-    nb += b[i] * b[i];
-  }
-  return dot / (Math.sqrt(na) * Math.sqrt(nb));
-}
-
-// -------------------------------------------------------------
-// RAG — obtener contexto usando ADA-002
-// -------------------------------------------------------------
-async function obtenerContexto(client, pregunta) {
-  if (!EMBEDDINGS.length) return "";
-
-  // 1. Generar embedding de la pregunta usando ADA-002
-  const embeddingUser = await client.embeddings.create({
-    model: "text-embedding-ada-002",
-    input: pregunta
-  });
-
-  const vectorUser =
-    embeddingUser.data?.[0]?.embedding || embeddingUser.data?.[0] || [];
-
-  if (!vectorUser.length) return "";
-
-  // 2. Buscar los 3 fragmentos más similares
-  const scored = EMBEDDINGS.map((item) => ({
-    texto: item.texto,
-    score: cosineSimilarity(vectorUser, item.vector)
-  }));
-
-  scored.sort((a, b) => b.score - a.score);
-
-  // Tomar máximo 3
-  const top = scored.slice(0, 3).map((x) => x.texto).join("\n\n");
-
-  return top;
-}
-
-// -------------------------------------------------------------
-// MITIGA PRO — 6 CAPAS
-// -------------------------------------------------------------
-function construirPromptMITIGA(pregunta, contexto) {
-  return `
-Eres el Asistente MITIGA, especializado en deterioro cognitivo y Alzheimer.
-
-────────────────────────────────────────
-CAPA 1 — ROL MITIGA
-────────────────────────────────────────
-Ayudas a familias y cuidadores con orientación práctica, basada en evidencia
-divulgativa. NO diagnosticas ni prescribes.
-
-────────────────────────────────────────
-CAPA 2 — BLENDING CLÍNICO
-────────────────────────────────────────
-Integra: el manual MITIGA, el contexto clínico, el problema del usuario
-y las buenas prácticas sociosanitarias.
-
-────────────────────────────────────────
-CAPA 3 — CONTEXT SCAFFOLDING
-────────────────────────────────────────
-Paciente tipo: deterioro leve–moderado, entorno domiciliario, riesgos comunes:
-adherencia, sueño, irritabilidad, desorientación nocturna.
-
-────────────────────────────────────────
-CAPA 4 — META-RAZONAMIENTO
-────────────────────────────────────────
-Antes de responder analiza: causas posibles, riesgos, factores modificables,
-acciones inmediatas y señales de alerta.
-
-────────────────────────────────────────
-CAPA 5 — MEMORIA SIMULADA
-────────────────────────────────────────
-Simula experiencia acumulada MITIGA sin almacenar datos del usuario.
-
-────────────────────────────────────────
-CAPA 6 — GUARDAILS
-────────────────────────────────────────
-Tono: empático, claro, no alarmista.  
-Estructura sugerida:
-1) Comprensión  
-2) Posibles causas  
-3) Acciones prácticas hoy  
-4) Qué observar  
-5) Cuándo consultar  
-
-────────────────────────────────────────
-PREGUNTA DEL USUARIO:
-"${pregunta}"
-
-────────────────────────────────────────
-FRAGMENTOS RELEVANTES MITIGA (RAG):
-${contexto}
-  `.trim();
-}
-
-// -------------------------------------------------------------
-// HANDLER —— FUNCIÓN SERVERLESS NETLIFY
-// -------------------------------------------------------------
 export const handler = async (event) => {
   try {
     if (event.httpMethod !== "POST") {
-      return { statusCode: 405, body: "Método no permitido" };
+      return {
+        statusCode: 405,
+        body: JSON.stringify({ error: "Método no permitido" }),
+      };
     }
 
-    const payload = JSON.parse(event.body || "{}");
+    const body = JSON.parse(event.body || "{}");
+    const messages = body.messages;
 
-    const mensajes = payload.messages || [];
-    const pregunta = mensajes[mensajes.length - 1]?.content || "";
+    if (!messages) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: "Faltan mensajes" }),
+      };
+    }
 
-    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-    // 💡 Producir contexto usando ADA-002
-    const contexto = await obtenerContexto(client, pregunta);
-
-    const promptFinal = construirPromptMITIGA(pregunta, contexto);
-
-    // Llamada correcta al nuevo SDK (Responses API)
-    const respuesta = await client.responses.create({
-      model: "gpt-4o-mini",
-      input: [
-        { role: "system", content: promptFinal },
-        ...mensajes.map((m) => ({ role: m.role, content: m.content }))
-      ],
-      max_output_tokens: 600,
-      temperature: 0.55
+    const client = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
     });
 
-    const texto =
-      respuesta.output_text ||
-      respuesta.output?.[0]?.content?.[0]?.text ||
-      "No se pudo generar respuesta.";
+    // -------------------------------------------------------------------
+    // 🧠 1. CREAR EMBEDDING (modelo moderno compatible)
+    // -------------------------------------------------------------------
+    const embeddingResponse = await client.embeddings.create({
+      model: "text-embedding-large",
+      input: messages[messages.length - 1].content,
+    });
+
+    const userEmbedding = embeddingResponse.data[0].embedding;
+
+    // -------------------------------------------------------------------
+    // 🧠 2. CÁLCULO DE SIMILITUD PARA REFERENCIA MITIGA
+    // -------------------------------------------------------------------
+    let mejorCoincidencia = null;
+    let mejorSimilitud = -Infinity;
+
+    for (const item of embeddingsData) {
+      const sim = coseno(userEmbedding, item.embedding);
+      if (sim > mejorSimilitud) {
+        mejorSimilitud = sim;
+        mejorCoincidencia = item;
+      }
+    }
+
+    let contexto = "";
+    if (mejorCoincidencia && mejorCoincidencia.id) {
+      contexto =
+        referencias[mejorCoincidencia.id]?.texto ||
+        referencias[mejorCoincidencia.id]?.frase ||
+        "";
+    }
+
+    // -------------------------------------------------------------------
+    // 🧠 3. 6 CAPAS MITIGA — SYSTEM PROMPT COMPLETO
+    // -------------------------------------------------------------------
+    const systemPrompt = `
+Eres **MITIGA PRO**, asistente clínico–sociosanitario para Alzheimer y deterioro cognitivo.  
+Tu misión es **anticipar y mitigar Eventos Médicos Evitables (EME)** en el entorno domiciliario.
+
+Debes integrar SIEMPRE estas **6 capas**:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+**1) Capa 1 — Pregunta actual del usuario**  
+Comprende la situación real, su urgencia y contexto emocional.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+**2) Capa 2 — Referencia MITIGA (búsqueda semántica)**  
+Referencia encontrada:  
+"${contexto}"
+
+Utilízala solo si añade claridad, estructura o precisión.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+**3) Capa 3 — MITIGA Base (tu identidad profesional)**  
+- Lenguaje: claro, útil, no técnico, no paternalista.  
+- Estilo: empático, humano, orientado a prevenir problemas reales.  
+- Objetivo: ayudar a la familia a *actuar hoy* para evitar deterioro acelerado.  
+- Evita alarmar salvo que sea clínicamente necesario.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+**4) Capa 4 — Marco Clínico**  
+Considera:  
+- alteraciones de conducta  
+- confusión nocturna  
+- deterioro cognitivo fluctuante  
+- causas clínicas de desorientación  
+- signos de alarma que requieren neurólogo o urgencias  
+- relación síntomas ↔ medicación / efectos adversos
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+**5) Capa 5 — Marco Sociosanitario MITIGA**  
+Incluye:  
+- carga del cuidador  
+- entorno físico inseguro  
+- rutinas desestructuradas  
+- adherencia a la medicación  
+- factores de riesgo de EME (caídas, deshidratación, noches sin dormir…)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+**6) Capa 6 — Entorno Familiar y Acción Práctica**  
+Tus respuestas deben incluir recomendaciones concretas, realistas y aplicables hoy,  
+no teoría.  
+Incluye SIEMPRE pasos específicos.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+TU MISIÓN FINAL:
+- Dar explicación del síntoma.  
+- Identificar riesgos ocultos.  
+- Proponer acciones preventivas.  
+- Si procede, sugerir cuándo contactar con un profesional.
+
+NO uses lenguaje de diagnóstico.  
+NO sustituyes al neurólogo.  
+Eres *la capa de inteligencia práctica en casa.*
+`;
+
+    // -------------------------------------------------------------------
+    // 🧠 4. RESPUESTA FINAL DEL MODELO
+    // -------------------------------------------------------------------
+    const completion = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: systemPrompt },
+        ...messages,
+      ],
+    });
 
     return {
       statusCode: 200,
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        respuesta: texto,
-        rag_usado: contexto.length > 0,
-        modelo: "gpt-4o-mini + ADA-002"
-      })
+        choices: [
+          {
+            message: completion.choices[0].message,
+          },
+        ],
+      }),
     };
   } catch (err) {
-    console.error("ERROR MITIGA:", err);
+    console.error("ERROR MITIGA PROXY:", err);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: err.message })
+      body: JSON.stringify({
+        error: "Error interno en MITIGA proxy",
+        detalle: err.message,
+      }),
     };
   }
 };
+
+// -------------------------------------------------------------------
+// 📌 Función de similitud coseno
+// -------------------------------------------------------------------
+function coseno(a, b) {
+  let dot = 0,
+    normA = 0,
+    normB = 0;
+  for (let i = 0; i < a.length; i++) {
+    dot += a[i] * b[i];
+    normA += a[i] ** 2;
+    normB += b[i] ** 2;
+  }
+  return dot / (Math.sqrt(normA) * Math.sqrt(normB));
+}
