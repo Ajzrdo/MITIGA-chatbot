@@ -7,7 +7,7 @@ const data = JSON.parse(fs.readFileSync("./referencias/referencias.json", "utf8"
 
 export async function buscarFragmentosRelevantes(pregunta, maxResultados = 3) {
   const embPregunta = await openai.embeddings.create({
-    model: "text-embedding-3-small",
+    model: "text-embedding-3-large",
     input: pregunta
   });
 

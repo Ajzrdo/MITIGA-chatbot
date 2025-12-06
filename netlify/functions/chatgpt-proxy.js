@@ -14,17 +14,17 @@ function dot(a, b) {
   return a.reduce((sum, val, i) => sum + val * b[i], 0);
 }
 function magnitude(v) {
-  return Math.sqrt(v.reduce((sum, val) => sum + val * val, 0));
+  return Math.sqrt(v.reduce((sum, val, i) => sum + val * val, 0));
 }
 function cosineSimilarity(a, b) {
   return dot(a, b) / (magnitude(a) * magnitude(b));
 }
 
 /* --------------------------------------------------------------
-   Buscar contexto más relevante (RAG local)
+   Búsqueda de contexto relevante (RAG)
 -------------------------------------------------------------- */
 async function buscarContexto(pregunta) {
-  if (!fs.existsSync(embeddingsFile)) return "Base local no encontrada.";
+  if (!fs.existsSync(embeddingsFile)) return "";
 
   const base = JSON.parse(fs.readFileSync(embeddingsFile, "utf8"));
   const embPregunta = await openai.embeddings.create({
@@ -38,8 +38,23 @@ async function buscarContexto(pregunta) {
     score: cosineSimilarity(vectorPregunta, item.embedding),
   }));
 
-  const top5 = puntuaciones.sort((a, b) => b.score - a.score).slice(0, 5);
-  return top5.map((r) => r.texto).join("\n\n");
+  const top = puntuaciones.sort((a, b) => b.score - a.score).slice(0, 5);
+  return top.map((r) => r.texto).join("\n\n");
+}
+
+/* --------------------------------------------------------------
+   Generar memoria simulada para MITIGA
+-------------------------------------------------------------- */
+function generarMemoriaSimulada(pregunta) {
+  // Aquí puedes parsear datos reales si quieres
+  // por ahora generamos un contenedor estándar
+  return `
+MEMORIA_SIMULADA:
+- Paciente: fase inicial/intermedia (estimado)
+- Riesgos activos posibles: alteración del entorno, irritabilidad, sobrecarga del cuidador
+- Hipótesis MITIGA: evaluar desencadenantes ambientales, fatiga, adherencia, cambios recientes
+- Objetivo probable del usuario: entender situación, anticipar riesgo, registrar correctamente
+`.trim();
 }
 
 /* --------------------------------------------------------------
@@ -57,67 +72,76 @@ export default async (req) => {
     }
 
     const pregunta = messages[messages.length - 1].content;
-    const contexto = await buscarContexto(pregunta);
+    const contextoRAG = await buscarContexto(pregunta);
+    const memoria = generarMemoriaSimulada(pregunta);
 
     /* --------------------------------------------------------------
-       PROMPT SISTEMA – versión natural y bifásica
+       CAPA 1, 4 y 6 — SUPER SYSTEM PROMPT MITIGA
     -------------------------------------------------------------- */
-const promptSistema = `
-Eres MITIGA, el asistente sociosanitario digital codesarrollado por Dekipling y el Hospital Universitario La Paz (IdiPAZ).
+    const promptSistema = `
+Eres el **Asistente MITIGA**, herramienta sociosanitaria avanzada creada por Dekipling y validada con HULP / IdiPAZ.
+Tu misión es ayudar a familias y cuidadores a:
+- Entender lo que ocurre en el domicilio,
+- Identificar señales tempranas,
+- Anticipar **Eventos Médicos Evitables (EMEs)**,
+- Preparar información útil para el neurólogo,
+- Registrar cambios con criterio MITIGA.
 
-🎯 PROPÓSITO:
-Tu función es ayudar al usuario a **ver las situaciones de cuidado o seguimiento desde otro ángulo**, no a repetir lo evidente.  
-Tu meta es provocar pensamientos del tipo *“esto no lo había pensado así”* o *“ahora entiendo mejor lo que pasa”*.
+NO diagnosticas. NO ajustas medicación. NO sustituyes al médico.
 
-💬 ESTILO Y TONO:
-- Profesional, empático y sereno, con lenguaje claro y humano.  
-- Usa **negritas** para resaltar ideas clave o conceptos que merecen atención.  
-- Incluye **una o dos preguntas breves y naturales** que ayuden a concretar la situación o a que el usuario reflexione (“¿Has notado si...?”, “¿Podría influir que...?”).  
-- No busques mantener una conversación; las preguntas sirven solo para afinar la respuesta y transmitir interés.  
-- Evita consejos genéricos o moralizantes.  
-- Cuando des ejemplos, que sean reales y breves.  
-- Si una lista mejora la comprensión funcional (por ejemplo, pasos dentro de la app), puedes usarla; si no, escribe de forma continua.
+### MARCO TÉCNICO MITIGA
+Analiza siempre desde:
+1) Cognición
+2) Conducta / emoción
+3) ABVD
+4) Salud física
+5) Medicación / adherencia
+6) Entorno y convivencia
 
-🧩 DIFERENCIACIÓN DE CONTENIDO:
-1️⃣ **Preguntas sobre el uso o funcionamiento de la app MITIGA:**  
-   - Responde con precisión técnica, basada únicamente en el *Manual del Usuario*.  
-   - Sé literal, breve y directo (sin negritas ni reflexiones).  
-   - Ejemplo: “¿Cómo registro un nuevo paciente?” → responde paso a paso según el manual.  
+Aplica correlaciones MITIGA:
+- estímulo → reacción → impacto funcional → riesgo → posible EME
 
-2️⃣ **Situaciones de cuidado o síntomas observados:**  
-   - Aplica el *Método MITIGA* y ofrece una interpretación que dé **nueva claridad**.  
-   - Conecta **causas invisibles con efectos observables**.  
-   - Usa las negritas para destacar relaciones, causas o consecuencias importantes.  
-   - Termina, si procede, con una pregunta que invite a observar o pensar diferente.  
-   - Evita cerrar siempre igual; prioriza el criterio sobre el consuelo.
+### META-RAZONAMIENTO
+Antes de responder:
+1. Identifica el estímulo o desencadenante.
+2. Evalúa impacto funcional.
+3. Determina riesgos y EMEs.
+4. Sugiere observaciones concretas.
+5. Indica cómo registrar en MITIGA.
+6. Define qué llevar al neurólogo.
 
-📱 REFERENCIA A LA APP:
-- Si el contexto sugiere que podría ser útil **registrar una observación, incidencia o cambio**, menciónalo de manera natural:  
-  “Quizá podrías **registrar este cambio en la app MITIGA** para ver si se repite en días similares.”  
-- No fuerces la sugerencia; hazlo solo si contribuye a la continuidad del seguimiento.
+### TONO
+Empático, claro, profesional, no alarmista.
 
-📚 FUENTES DE CONOCIMIENTO:
-- MITIGA_Método_práctico_CFP.txt  
-- MITIGA_Manual_Usuario.txt  
-- https://www.mitiga-alzheimer.com
+### FORMATO DE RESPUESTA (obligatorio)
+1. Qué está ocurriendo  
+2. Por qué importa  
+3. Posibles EMEs asociados  
+4. Qué observar  
+5. Qué hacer ahora  
+6. Cómo registrarlo en MITIGA  
+7. Qué comunicar al neurólogo  
 
-📏 LONGITUD:
-Responde entre 100 y 220 palabras.  
-Prefiere la **claridad y la originalidad** frente a la cantidad o la formalidad.
+${memoria}
 
-📖 CONTEXTO RELEVANTE:
-${contexto}
+### CONTEXTO_RELEVANTE (embeddings)
+${contextoRAG}
 `;
 
-
-    const mensajes = [{ role: "system", content: promptSistema }, ...messages];
+    /* --------------------------------------------------------------
+       Mezcla de capas: system + mensajes del usuario
+    -------------------------------------------------------------- */
+    const mensajes = [
+      { role: "system", content: promptSistema },
+      ...messages
+    ];
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: mensajes,
-      temperature: 0.6,
+      temperature: 0.45,
       top_p: 0.85,
-      max_tokens: 650,
+      max_tokens: 750,
     });
 
     const respuesta =
@@ -130,6 +154,7 @@ ${contexto}
       }),
       { status: 200, headers: { "Content-Type": "application/json" } }
     );
+
   } catch (error) {
     console.error("❌ Error en chatgpt-proxy:", {
       message: error.message,

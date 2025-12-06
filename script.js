@@ -137,7 +137,8 @@ async function sendMessage() {
     activeRequestController = null;
 
     if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`);
+      const errorData = await res.json().catch(() => ({}));
+      throw new Error(errorData.error || `HTTP ${res.status}`);
     }
 
     const data = await res.json();
@@ -156,9 +157,11 @@ async function sendMessage() {
     console.error("❌ Error al conectar con MITIGA:", error);
     typingIndicator.classList.remove("show");
     typingIndicator.classList.add("hidden");
+
     const errorMessage = isAbortError
       ? "La solicitud tardó demasiado y se canceló. Intenta nuevamente."
-      : "Error al conectar con MITIGA. Intenta nuevamente.";
+      : (error.message || "Error al conectar con MITIGA. Intenta nuevamente.");
+
     appendMessage(errorMessage, "bot");
   } finally {
     if (timeoutId) {
