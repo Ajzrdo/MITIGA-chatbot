@@ -1,147 +1,178 @@
+// netlify/functions/chatgpt-proxy.js
+
+import OpenAI from "openai";
 import fs from "fs";
 import path from "path";
-import OpenAI from "openai";
-import dotenv from "dotenv";
 
-dotenv.config();
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-const embeddingsFile = path.join(process.cwd(), "referencias", "mitiga_embeddings.json");
+// -------------------------------------------------------------
+// CONFIG
+// -------------------------------------------------------------
+const EMBEDDINGS_PATH = "./netlify/functions/mitiga_embeddings.json";
+let EMBEDDINGS = [];
 
-/* --------------------------------------------------------------
-   Utilidades matemáticas
--------------------------------------------------------------- */
-function dot(a, b) {
-  return a.reduce((sum, val, i) => sum + val * b[i], 0);
+// Cargar embeddings precomputados
+try {
+  const raw = fs.readFileSync(EMBEDDINGS_PATH, "utf8");
+  EMBEDDINGS = JSON.parse(raw);
+  console.log("Embeddings cargados:", EMBEDDINGS.length);
+} catch (e) {
+  console.warn("No se pudo cargar mitiga_embeddings.json");
+  EMBEDDINGS = [];
 }
-function magnitude(v) {
-  return Math.sqrt(v.reduce((sum, val) => sum + val * val, 0));
-}
+
+// Función distancia coseno (para comparar embeddings)
 function cosineSimilarity(a, b) {
-  return dot(a, b) / (magnitude(a) * magnitude(b));
+  let dot = 0.0;
+  let na = 0.0;
+  let nb = 0.0;
+
+  for (let i = 0; i < a.length; i++) {
+    dot += a[i] * b[i];
+    na += a[i] * a[i];
+    nb += b[i] * b[i];
+  }
+  return dot / (Math.sqrt(na) * Math.sqrt(nb));
 }
 
-/* --------------------------------------------------------------
-   Buscar contexto más relevante (RAG local)
--------------------------------------------------------------- */
-async function buscarContexto(pregunta) {
-  if (!fs.existsSync(embeddingsFile)) return "Base local no encontrada.";
+// -------------------------------------------------------------
+// RAG — obtener contexto usando ADA-002
+// -------------------------------------------------------------
+async function obtenerContexto(client, pregunta) {
+  if (!EMBEDDINGS.length) return "";
 
-  const base = JSON.parse(fs.readFileSync(embeddingsFile, "utf8"));
-  const embPregunta = await openai.embeddings.create({
-    model: "text-embedding-3-large",
-    input: pregunta,
+  // 1. Generar embedding de la pregunta usando ADA-002
+  const embeddingUser = await client.embeddings.create({
+    model: "text-embedding-ada-002",
+    input: pregunta
   });
-  const vectorPregunta = embPregunta.data[0].embedding;
 
-  const puntuaciones = base.map((item) => ({
-    ...item,
-    score: cosineSimilarity(vectorPregunta, item.embedding),
+  const vectorUser =
+    embeddingUser.data?.[0]?.embedding || embeddingUser.data?.[0] || [];
+
+  if (!vectorUser.length) return "";
+
+  // 2. Buscar los 3 fragmentos más similares
+  const scored = EMBEDDINGS.map((item) => ({
+    texto: item.texto,
+    score: cosineSimilarity(vectorUser, item.vector)
   }));
 
-  const top5 = puntuaciones.sort((a, b) => b.score - a.score).slice(0, 5);
-  return top5.map((r) => r.texto).join("\n\n");
+  scored.sort((a, b) => b.score - a.score);
+
+  // Tomar máximo 3
+  const top = scored.slice(0, 3).map((x) => x.texto).join("\n\n");
+
+  return top;
 }
 
-/* --------------------------------------------------------------
-   Handler principal
--------------------------------------------------------------- */
-export default async (req) => {
-  try {
-    if (req.method !== "POST") {
-      return new Response(JSON.stringify({ error: "Método no permitido" }), { status: 405 });
-    }
+// -------------------------------------------------------------
+// MITIGA PRO — 6 CAPAS
+// -------------------------------------------------------------
+function construirPromptMITIGA(pregunta, contexto) {
+  return `
+Eres el Asistente MITIGA, especializado en deterioro cognitivo y Alzheimer.
 
-    const { messages } = await req.json();
-    if (!messages || messages.length === 0) {
-      return new Response(JSON.stringify({ error: "Faltan mensajes" }), { status: 400 });
-    }
+────────────────────────────────────────
+CAPA 1 — ROL MITIGA
+────────────────────────────────────────
+Ayudas a familias y cuidadores con orientación práctica, basada en evidencia
+divulgativa. NO diagnosticas ni prescribes.
 
-    const pregunta = messages[messages.length - 1].content;
-    const contexto = await buscarContexto(pregunta);
+────────────────────────────────────────
+CAPA 2 — BLENDING CLÍNICO
+────────────────────────────────────────
+Integra: el manual MITIGA, el contexto clínico, el problema del usuario
+y las buenas prácticas sociosanitarias.
 
-    /* --------------------------------------------------------------
-       PROMPT SISTEMA – versión natural y bifásica
-    -------------------------------------------------------------- */
-const promptSistema = `
-Eres MITIGA, el asistente sociosanitario digital codesarrollado por Dekipling y el Hospital Universitario La Paz (IdiPAZ).
+────────────────────────────────────────
+CAPA 3 — CONTEXT SCAFFOLDING
+────────────────────────────────────────
+Paciente tipo: deterioro leve–moderado, entorno domiciliario, riesgos comunes:
+adherencia, sueño, irritabilidad, desorientación nocturna.
 
-🎯 PROPÓSITO:
-Tu función es ayudar al usuario a **ver las situaciones de cuidado o seguimiento desde otro ángulo**, no a repetir lo evidente.  
-Tu meta es provocar pensamientos del tipo *“esto no lo había pensado así”* o *“ahora entiendo mejor lo que pasa”*.
+────────────────────────────────────────
+CAPA 4 — META-RAZONAMIENTO
+────────────────────────────────────────
+Antes de responder analiza: causas posibles, riesgos, factores modificables,
+acciones inmediatas y señales de alerta.
 
-💬 ESTILO Y TONO:
-- Profesional, empático, sereno y conciso, con lenguaje claro y humano.  
-- Usa **negritas** para resaltar ideas clave o conceptos que merecen atención.  
-- Incluye **una o dos preguntas breves y naturales** que ayuden a concretar la situación o a que el usuario reflexione (“¿Has notado si...?”, “¿Podría influir que...?”).  
-- No busques mantener una conversación; las preguntas sirven solo para afinar la respuesta y transmitir interés.  
-- Evita consejos genéricos o moralizantes.  
-- Cuando des ejemplos, que sean reales y breves.  
-- Si una lista mejora la comprensión funcional (por ejemplo, pasos dentro de la app), puedes usarla; si no, escribe de forma continua.
+────────────────────────────────────────
+CAPA 5 — MEMORIA SIMULADA
+────────────────────────────────────────
+Simula experiencia acumulada MITIGA sin almacenar datos del usuario.
 
-🧩 DIFERENCIACIÓN DE CONTENIDO:
-1️⃣ **Preguntas sobre el uso o funcionamiento de la app MITIGA:**  
-   - Responde con precisión técnica, basada únicamente en el *Manual del Usuario*.  
-   - Sé literal, breve y directo (sin negritas ni reflexiones).  
-   - Ejemplo: “¿Cómo registro un nuevo paciente?” → responde paso a paso según el manual.  
+────────────────────────────────────────
+CAPA 6 — GUARDAILS
+────────────────────────────────────────
+Tono: empático, claro, no alarmista.  
+Estructura sugerida:
+1) Comprensión  
+2) Posibles causas  
+3) Acciones prácticas hoy  
+4) Qué observar  
+5) Cuándo consultar  
 
-2️⃣ **Situaciones de cuidado o síntomas observados:**  
-   - Aplica el *Método MITIGA* y ofrece una interpretación que dé **nueva claridad**.  
-   - Conecta **causas invisibles con efectos observables**.  
-   - Usa las negritas para destacar relaciones, causas o consecuencias importantes.  
-   - Termina, si procede, con una pregunta que invite a observar o pensar diferente.  
-   - Evita cerrar siempre igual; prioriza el criterio sobre el consuelo.
+────────────────────────────────────────
+PREGUNTA DEL USUARIO:
+"${pregunta}"
 
-📱 REFERENCIA A LA APP:
-- Si el contexto sugiere que podría ser útil **registrar una observación, incidencia o cambio**, menciónalo de manera natural:  
-  “Quizá podrías **registrar este cambio en la app MITIGA** para ver si se repite en días similares.”  
-- No fuerces la sugerencia; hazlo solo si contribuye a la continuidad del seguimiento.
-
-📚 FUENTES DE CONOCIMIENTO:
-- MITIGA_Método_práctico_CFP.txt  
-- MITIGA_Manual_Usuario.txt  
-- https://www.mitiga-alzheimer.com
-
-📏 LONGITUD:
-Responde entre 50 y 110 palabras.  
-Prefiere la **claridad y la originalidad** frente a la cantidad o la formalidad.
-
-📖 CONTEXTO RELEVANTE:
+────────────────────────────────────────
+FRAGMENTOS RELEVANTES MITIGA (RAG):
 ${contexto}
-`;
+  `.trim();
+}
 
+// -------------------------------------------------------------
+// HANDLER —— FUNCIÓN SERVERLESS NETLIFY
+// -------------------------------------------------------------
+export const handler = async (event) => {
+  try {
+    if (event.httpMethod !== "POST") {
+      return { statusCode: 405, body: "Método no permitido" };
+    }
 
-    const mensajes = [{ role: "system", content: promptSistema }, ...messages];
+    const payload = JSON.parse(event.body || "{}");
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: mensajes,
-      temperature: 0.6,
-      top_p: 0.85,
-      max_tokens: 650,
+    const mensajes = payload.messages || [];
+    const pregunta = mensajes[mensajes.length - 1]?.content || "";
+
+    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+    // 💡 Producir contexto usando ADA-002
+    const contexto = await obtenerContexto(client, pregunta);
+
+    const promptFinal = construirPromptMITIGA(pregunta, contexto);
+
+    // Llamada correcta al nuevo SDK (Responses API)
+    const respuesta = await client.responses.create({
+      model: "gpt-4o-mini",
+      input: [
+        { role: "system", content: promptFinal },
+        ...mensajes.map((m) => ({ role: m.role, content: m.content }))
+      ],
+      max_output_tokens: 600,
+      temperature: 0.55
     });
 
-    const respuesta =
-      completion.choices?.[0]?.message?.content ||
-      "No se pudo obtener respuesta de MITIGA.";
+    const texto =
+      respuesta.output_text ||
+      respuesta.output?.[0]?.content?.[0]?.text ||
+      "No se pudo generar respuesta.";
 
-    return new Response(
-      JSON.stringify({
-        choices: [{ message: { content: respuesta } }],
-      }),
-      { status: 200, headers: { "Content-Type": "application/json" } }
-    );
-  } catch (error) {
-    console.error("❌ Error en chatgpt-proxy:", {
-      message: error.message,
-      stack: error.stack,
-    });
-
-    return new Response(
-      JSON.stringify({
-        error: "Error interno en MITIGA proxy",
-        detalle: error.message,
-      }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
+    return {
+      statusCode: 200,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        respuesta: texto,
+        rag_usado: contexto.length > 0,
+        modelo: "gpt-4o-mini + ADA-002"
+      })
+    };
+  } catch (err) {
+    console.error("ERROR MITIGA:", err);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: err.message })
+    };
   }
 };
