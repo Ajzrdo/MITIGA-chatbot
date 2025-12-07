@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import referencias from "../../referencias.json";
+import referencias from "./referencias.json";
 import embeddingsData from "./mitiga_embeddings.json";
 
 export const handler = async (event) => {
