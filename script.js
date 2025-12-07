@@ -1,4 +1,4 @@
-const API_URL = "/.netlify/functions/chatgpt-proxy-v2";
+const API_URL = "https://mitiga-chatbot.ajzrdo.workers.dev";
 const REQUEST_TIMEOUT_MS = 45000;
 const chatMessages = document.getElementById("chatMessages");
 const userInput = document.getElementById("userInput");
