@@ -5,37 +5,43 @@ import embeddings from "./mitiga_embeddings.json" assert { type: "json" };
 
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-// ⚡ Cache en memoria dentro del runtime Netlify
 let cachedEmbeddings = embeddings;
 
-// ------------------------ CONFIG -----------------------------
-
+// -----------------------------------------------------------
+// CONFIG
+// -----------------------------------------------------------
 const MODEL = "gpt-4o-mini";
 const EMBEDDING_MODEL = "text-embedding-ada-002";
 
-// ----------------------- ESTILO MITIGA ------------------------
+// -----------------------------------------------------------
+// FORMATO MITIGA – REFORZADO (NO SE PUEDE ROMPER)
+// -----------------------------------------------------------
 
-const estiloMITIGA = `
-FORMATO OBLIGATORIO — NO ROMPER NUNCA:
+const formatoRigido = `
+Debes responder SIEMPRE con el siguiente formato EXACTO.
+NO puedes agregar saltos adicionales, NO puedes mover los títulos, NO puedes separar número/título/texto.
 
-Cada respuesta debe seguir EXACTAMENTE este formato:
+FORMATO OBLIGATORIO:
 
-1. <span style="color:#8A1538"><b>Qué está ocurriendo</b></span>: texto en la MISMA línea, sin saltos, sin viñetas adicionales.
-2. <span style="color:#8A1538"><b>Por qué importa</b></span>: texto en la misma línea.
-3. <span style="color:#8A1538"><b>Posibles EME</b></span>: texto en la misma línea.
-4. <span style="color:#8A1538"><b>Qué observar</b></span>: texto en la misma línea.
-5. <span style="color:#8A1538"><b>Qué hacer ahora</b></span>: texto en la misma línea.
-6. <span style="color:#8A1538"><b>Recomendación profesional MITIGA</b></span>: texto en la misma línea.
+1. <span style="color:#8A1538"><b>Qué está ocurriendo</b></span>: [texto en una sola línea]
+2. <span style="color:#8A1538"><b>Por qué importa</b></span>: [texto en una sola línea]
+3. <span style="color:#8A1538"><b>Posibles EME</b></span>: [texto en una sola línea]
+4. <span style="color:#8A1538"><b>Qué observar</b></span>: [texto en una sola línea]
+5. <span style="color:#8A1538"><b>Qué hacer ahora</b></span>: [texto en una sola línea]
+6. <span style="color:#8A1538"><b>Recomendación profesional MITIGA</b></span>: [texto en una sola línea]
 
-Reglas críticas:
-- Prohibido generar viñetas debajo de cada número.
-- Prohibido separar título y contenido.
-- Prohibido insertar saltos entre número → título → contenido.
-- Siempre usar el color #8A1538 y negrita solo en el título.
-- No usar “como IA”, “según la evidencia”, ni advertencias médicas.
+REGLAS:
+- NO generes viñetas internas.
+- NO separes el número del título.
+- NO insertes saltos después del número.
+- TODO debe aparecer en una sola línea por punto.
+- Usa solo negrita en el título.
+- No uses advertencias tipo "consulta a un médico".
 `;
 
-// --------------------- FUNCIONES RAG --------------------------
+// -----------------------------------------------------------
+// BUSCAR REFERENCIAS (RAG)
+// -----------------------------------------------------------
 
 function cosine(a, b) {
   let s = 0;
@@ -61,7 +67,9 @@ async function buscarReferencias(query) {
     .map(r => r.texto);
 }
 
-// ----------------------- HANDLER -----------------------------
+// -----------------------------------------------------------
+// HANDLER PRINCIPAL
+// -----------------------------------------------------------
 
 export async function handler(event) {
   try {
@@ -71,54 +79,71 @@ export async function handler(event) {
 
     const body = JSON.parse(event.body || "{}");
     const messages = body.messages || [];
-    if (messages.length === 0)
+    if (messages.length === 0) {
       return { statusCode: 400, body: JSON.stringify({ error: "No messages" }) };
+    }
 
-    const ultimo = messages[messages.length - 1].content;
+    const ultimoMensaje = messages[messages.length - 1].content;
 
+    // ------------------------------
     // RAG
-    const docs = await buscarReferencias(ultimo);
+    // ------------------------------
+    const docs = await buscarReferencias(ultimoMensaje);
     const contexto = docs.join("\n---\n");
 
-    // Plantilla rígida que el modelo debe completar EXACTAMENTE.
-    const plantillaSalida = `
-RESPONDE COMPLETANDO EXACTAMENTE ESTA PLANTILLA:
+    // ------------------------------
+    // Pregunta de clarificación
+    // ------------------------------
+    const preguntaClarificacion =
+      "Antes de darte una recomendación más fina, ¿hay algo más que debamos saber sobre el contexto, el momento del día o el estado emocional previo de la persona?";
 
-1. <span style="color:#8A1538"><b>Qué está ocurriendo</b></span>: 
-2. <span style="color:#8A1538"><b>Por qué importa</b></span>: 
-3. <span style="color:#8A1538"><b>Posibles EME</b></span>: 
-4. <span style="color:#8A1538"><b>Qué observar</b></span>: 
-5. <span style="color:#8A1538"><b>Qué hacer ahora</b></span>: 
-6. <span style="color:#8A1538"><b>Recomendación profesional MITIGA</b></span>: 
-`;
+    // ------------------------------
+    // Llamada al modelo
+    // ------------------------------
 
     const completion = await client.chat.completions.create({
       model: MODEL,
-      temperature: 0.1,
-      top_p: 0.7,
+      temperature: 0.2,
+      top_p: 0.9,
       max_tokens: 450,
       messages: [
         {
           role: "system",
           content: `
 Eres MITIGA, asistente experto en deterioro cognitivo.
-Usa siempre el formato obligatorio MITIGA.
-${estiloMITIGA}
+Tu misión: dar recomendaciones estructuradas, claras y accionables.
 
-Contexto relevante (RAG):
+SIGUE ESTAS REGLAS CRÍTICAS:
+${formatoRigido}
+
+Contexto clínico relevante (RAG):
 ${contexto}
 
-Debes cumplir la plantilla final sin romper el formato.
-          `
+Recuerda siempre:
+- Responder con formato MITIGA exacto.
+- Ofrecer adicionalmente UNA pregunta de clarificación al final.
+`
         },
-        { role: "user", content: ultimo },
-        { role: "assistant", content: plantillaSalida }
+        { role: "user", content: ultimoMensaje }
       ]
     });
 
+    // ------------------------------
+    // Añadir pregunta de clarificación
+    // ------------------------------
+
+    const respuestaFinal =
+      completion.choices[0].message.content +
+      `
+
+<hr>
+
+<span style="color:#8A1538"><b>PREGUNTA DE CLARIFICACIÓN MITIGA:</b></span> ${preguntaClarificacion}
+`;
+
     return {
       statusCode: 200,
-      body: JSON.stringify({ respuesta: completion.choices[0].message.content })
+      body: JSON.stringify({ respuesta: respuestaFinal })
     };
 
   } catch (err) {
