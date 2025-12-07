@@ -3,163 +3,129 @@ import OpenAI from "openai";
 import referencias from "./referencias.json" assert { type: "json" };
 import embeddings from "./mitiga_embeddings.json" assert { type: "json" };
 
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-/* -----------------------------------------------------------
-   🔵 CONFIGURACIÓN BASE
------------------------------------------------------------ */
+// ⚡ Cache en memoria dentro del runtime Netlify
+let cachedEmbeddings = embeddings;
+
+// ------------------------ CONFIG -----------------------------
+
 const MODEL = "gpt-4o-mini";
-const EMBEDDING_MODEL = "text-embedding-ada-002"; // estable y compatible
+const EMBEDDING_MODEL = "text-embedding-ada-002";
 
-/* -----------------------------------------------------------
-   🔵 ESTILO MITIGA (REGLAS DE RESPUESTA)
------------------------------------------------------------ */
+// ----------------------- ESTILO MITIGA ------------------------
+
 const estiloMITIGA = `
-ESTILO MITIGA — FORMATO DE RESPUESTA
-------------------------------------
+FORMATO OBLIGATORIO — NO ROMPER NUNCA:
 
-Cuando generes una respuesta, estructura SIEMPRE así:
+Cada respuesta debe seguir EXACTAMENTE este formato:
 
-1. <span style="color:#8A1538"><b>Título del punto en negrita y color MITIGA</b></span>: texto explicativo en la MISMA línea.
+1. <span style="color:#8A1538"><b>Qué está ocurriendo</b></span>: texto en la MISMA línea, sin saltos, sin viñetas adicionales.
+2. <span style="color:#8A1538"><b>Por qué importa</b></span>: texto en la misma línea.
+3. <span style="color:#8A1538"><b>Posibles EME</b></span>: texto en la misma línea.
+4. <span style="color:#8A1538"><b>Qué observar</b></span>: texto en la misma línea.
+5. <span style="color:#8A1538"><b>Qué hacer ahora</b></span>: texto en la misma línea.
+6. <span style="color:#8A1538"><b>Recomendación profesional MITIGA</b></span>: texto en la misma línea.
 
-2. NO abras viñetas nuevas después del número.
-   NO separes el título del contenido.
-   NO cambies la numeración.
-
-3. Usa Markdown permitido:
-   - **negritas**
-   - _cursivas_
-   - saltos de línea
-
-4. Está permitido usar HTML SOLO para aplicar color MITIGA (#8A1538):
-   Ejemplo: <span style="color:#8A1538">texto</span>
-
-5. No incluyas advertencias médicas genéricas.
-6. No digas “como IA”, “como modelo”, ni nada técnico.
-7. Responde siempre en tono calmado, práctico y orientado al domicilio.
+Reglas críticas:
+- Prohibido generar viñetas debajo de cada número.
+- Prohibido separar título y contenido.
+- Prohibido insertar saltos entre número → título → contenido.
+- Siempre usar el color #8A1538 y negrita solo en el título.
+- No usar “como IA”, “según la evidencia”, ni advertencias médicas.
 `;
 
-/* -----------------------------------------------------------
-   🔵 6 CAPAS MITIGA (PROMPT DE SISTEMA)
------------------------------------------------------------ */
-const capasMITIGA = `
-CAPA 1 — INTERPRETACIÓN CLÍNICA (NO DIAGNÓSTICA)
-Identifica qué puede estar ocurriendo desde la perspectiva del deterioro cognitivo y su impacto en la vida diaria.
+// --------------------- FUNCIONES RAG --------------------------
 
-CAPA 2 — RIESGOS ASOCIADOS
-Determina qué riesgos podrían derivarse del síntoma descrito (caídas, desorientación, errores de medicación, agotamiento del cuidador…).
-
-CAPA 3 — INTERVENCIÓN DOMICILIARIA INMEDIATA
-Explica qué acciones concretas puede tomar hoy la familia para mitigar ese síntoma desde casa.
-
-CAPA 4 — CUÁNDO ES SEÑAL DE ALERTA
-Indica qué señales deben hacer que la familia consulte antes de lo previsto con su neurólogo.
-
-CAPA 5 — OPTIMIZACIÓN DEL ENTORNO
-Opciones para modificar iluminación, rutinas, comunicación, estímulos, etc.
-
-CAPA 6 — RECOMENDACIONES PROFESIONALES MITIGA
-Entrega recomendaciones prácticas derivadas del enfoque sociosanitario de MITIGA.
-`;
-
-/* -----------------------------------------------------------
-   🔵 FUNCIONES RAG (BÚSQUEDA SEMÁNTICA LOCAL)
------------------------------------------------------------ */
-function cosineSimilarity(a, b) {
-  let sum = 0;
-  for (let i = 0; i < a.length; i++) sum += a[i] * b[i];
-  return sum;
+function cosine(a, b) {
+  let s = 0;
+  for (let i = 0; i < a.length; i++) s += a[i] * b[i];
+  return s;
 }
 
 async function buscarReferencias(query) {
   const emb = await client.embeddings.create({
     model: EMBEDDING_MODEL,
-    input: query,
+    input: query
   });
 
-  const vector = emb.data[0].embedding;
+  const vec = emb.data[0].embedding;
 
-  const resultados = embeddings
-    .map((r, idx) => ({
-      idx,
-      texto: referencias[idx].texto,
-      sim: cosineSimilarity(vector, r.embedding),
+  return cachedEmbeddings
+    .map((e, i) => ({
+      texto: referencias[i].texto,
+      score: cosine(vec, e.embedding)
     }))
-    .sort((a, b) => b.sim - a.sim)
-    .slice(0, 3);
-
-  return resultados.map(r => r.texto);
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3)
+    .map(r => r.texto);
 }
 
-/* -----------------------------------------------------------
-   🔵 HANDLER PRINCIPAL
------------------------------------------------------------ */
+// ----------------------- HANDLER -----------------------------
+
 export async function handler(event) {
   try {
     if (event.httpMethod !== "POST") {
-      return {
-        statusCode: 405,
-        body: JSON.stringify({ error: "Método no permitido" }),
-      };
+      return { statusCode: 405, body: JSON.stringify({ error: "Método no permitido" }) };
     }
 
     const body = JSON.parse(event.body || "{}");
-    const userMessages = body.messages || [];
+    const messages = body.messages || [];
+    if (messages.length === 0)
+      return { statusCode: 400, body: JSON.stringify({ error: "No messages" }) };
 
-    if (userMessages.length === 0) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: "No se recibieron mensajes" }),
-      };
-    }
+    const ultimo = messages[messages.length - 1].content;
 
-    const ultimaPregunta = userMessages[userMessages.length - 1].content;
+    // RAG
+    const docs = await buscarReferencias(ultimo);
+    const contexto = docs.join("\n---\n");
 
-    // 🔍 Ejecutar RAG
-    const docs = await buscarReferencias(ultimaPregunta);
-    const contextoRAG = docs.join("\n---\n");
+    // Plantilla rígida que el modelo debe completar EXACTAMENTE.
+    const plantillaSalida = `
+RESPONDE COMPLETANDO EXACTAMENTE ESTA PLANTILLA:
 
-    // 🧠 Solicitud al modelo
+1. <span style="color:#8A1538"><b>Qué está ocurriendo</b></span>: 
+2. <span style="color:#8A1538"><b>Por qué importa</b></span>: 
+3. <span style="color:#8A1538"><b>Posibles EME</b></span>: 
+4. <span style="color:#8A1538"><b>Qué observar</b></span>: 
+5. <span style="color:#8A1538"><b>Qué hacer ahora</b></span>: 
+6. <span style="color:#8A1538"><b>Recomendación profesional MITIGA</b></span>: 
+`;
+
     const completion = await client.chat.completions.create({
       model: MODEL,
+      temperature: 0.1,
+      top_p: 0.7,
+      max_tokens: 450,
       messages: [
         {
           role: "system",
           content: `
-Eres MITIGA, asistente especializado en deterioro cognitivo y Alzheimer.
-Usa SIEMPRE las 6 capas MITIGA.
-Aplica SIEMPRE el Estilo MITIGA incluido abajo.
-
+Eres MITIGA, asistente experto en deterioro cognitivo.
+Usa siempre el formato obligatorio MITIGA.
 ${estiloMITIGA}
 
-${capasMITIGA}
+Contexto relevante (RAG):
+${contexto}
 
-Base de conocimiento relevante:
-${contextoRAG}
-        `,
+Debes cumplir la plantilla final sin romper el formato.
+          `
         },
-        ...userMessages,
-      ],
-      temperature: 0.15,
-      max_tokens: 500,
+        { role: "user", content: ultimo },
+        { role: "assistant", content: plantillaSalida }
+      ]
     });
-
-    const respuesta = completion.choices[0].message.content;
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ respuesta }),
+      body: JSON.stringify({ respuesta: completion.choices[0].message.content })
     };
+
   } catch (err) {
-    console.error("ERROR MITIGA PROXY:", err);
+    console.error("MITIGA PROXY ERROR:", err);
     return {
       statusCode: 500,
-      body: JSON.stringify({
-        error: "Error interno en MITIGA proxy",
-        detalle: err.message,
-      }),
+      body: JSON.stringify({ error: "Error interno en MITIGA proxy", detalle: err.message })
     };
   }
 }
