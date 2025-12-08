@@ -1,4 +1,4 @@
-const API_URL = "https://ajzrdo.workers.dev/chatgpt-proxy";
+const API_URL = "https://odd-sun-33ef.ajzrdo.workers.dev/chatgpt-proxy";
 const REQUEST_TIMEOUT_MS = 45000;
 const chatMessages = document.getElementById("chatMessages");
 const userInput = document.getElementById("userInput");
