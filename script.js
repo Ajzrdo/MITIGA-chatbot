@@ -1,4 +1,4 @@
-const API_URL = "https://asistente.mitiga-alzheimer.com/";
+const API_URL = "https://mitiga-api.ajzrdo.workers.dev/";
 const REQUEST_TIMEOUT_MS = 45000;
 const chatMessages = document.getElementById("chatMessages");
 const userInput = document.getElementById("userInput");
@@ -81,77 +81,66 @@ window.addEventListener("DOMContentLoaded", () => {
    ENVÍO DE MENSAJE (INTEGRADO CON WORKER V3)
 ------------------------------------------- */
 async function sendMessage() {
-  const userText = userInput.value.trim();
-  if (!userText || sendButton.disabled) return;
+    if (!userText || sendButton.disabled) return;
 
-  appendMessage(userText, "user");
-  userInput.value = "";
-  ocultarPantallaInicio();
+    appendMessage(userText, "user");
+    userInput.value = "";
+    ocultarPantallinicio();
 
-  typingIndicator.classList.remove("hidden");
-  typingIndicator.classList.add("show");
-  chatMessages.scrollTop = chatMessages.scrollHeight;
+    typingIndicator.classList.remove("hidden");
+    chatMessages.scrollTop = chatMessages.scrollHeight;
 
-  conversationHistory.push({ role: "user", content: userText });
-  localStorage.setItem("conversationHistory", JSON.stringify(conversationHistory));
-
-  // Limitar historial para evitar tokens excesivos
-  conversationHistory = conversationHistory.slice(-8);
-
-  let timeoutId;
-
-  try {
-    sendButton.disabled = true;
-
-    if (activeRequestController) activeRequestController.abort();
-
-    const controller = new AbortController();
-    activeRequestController = controller;
-
-    timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-
-    const res = await fetch(API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        messages: conversationHistory
-      }),
-      signal: controller.signal
-    });
-
-    clearTimeout(timeoutId);
-    activeRequestController = null;
-
-    if (!res.ok) {
-      const errorData = await res.json().catch(() => ({}));
-      throw new Error(errorData.error || `HTTP ${res.status}`);
-    }
-
-    const data = await res.json();
-    typingIndicator.classList.add("hidden");
-
-    const botText = data?.reply || "No se pudo obtener respuesta de MITIGA.";
-
-    conversationHistory.push({ role: "assistant", content: botText });
+    conversationHistory.push({ role: "user", content: userText });
     localStorage.setItem("conversationHistory", JSON.stringify(conversationHistory));
 
-    await appendMessageGradual(botText, "bot");
+    // Evitar que la conversación crezca demasiado
+    if (conversationHistory.length > 20) {
+        conversationHistory = conversationHistory.slice(-20);
+    }
 
-  } catch (error) {
-    typingIndicator.classList.add("hidden");
+    let timeoutId;
 
-    const errorMessage =
-      error.name === "AbortError"
-        ? "La solicitud tardó demasiado y se canceló. Intenta nuevamente."
-        : error.message || "Error al conectar con MITIGA. Intenta nuevamente.";
+    try {
+        sendButton.disabled = true;
 
-    appendMessage(errorMessage, "bot");
+        if (activeRequestController) activeRequestController.abort();
 
-  } finally {
-    if (timeoutId) clearTimeout(timeoutId);
-    activeRequestController = null;
-    sendButton.disabled = false;
-  }
+        const controller = new AbortController();
+        activeRequestController = controller;
+
+        timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+        const res = await fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                messages: conversationHistory
+            }),
+            signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+        activeRequestController = null;
+
+        if (!res.ok) {
+            const errorData = await res.json().catch(() => ({}));
+            throw new Error(errorData.error || `HTTP ${res.status}`);
+        }
+
+        const data = await res.json();
+        typingIndicator.classList.add("hidden");
+
+        const botText = data.reply || "No se pudo obtener respuesta del asistente.";
+
+        conversationHistory.push({ role: "assistant", content: botText });
+        localStorage.setItem("conversationHistory", JSON.stringify(conversationHistory));
+
+        await appendMessageGradual(botText, "bot");
+
+    } catch (error) {
+        typingIndicator.classList.add("hidden");
+        console.error("ERROR:", error);
+    }
 }
 
 /* -------------------------------------------
