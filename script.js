@@ -5,28 +5,23 @@ const userInput = document.getElementById("userInput");
 const sendButton = document.getElementById("sendButton");
 const typingIndicator = document.getElementById("typingIndicator");
 const startScreen = document.getElementById("start-screen");
+
 let conversationHistory = [];
 let activeRequestController = null;
 
+/* -------------------------------------------
+   Cargar historial previo
+------------------------------------------- */
 try {
-  const storedHistory = localStorage.getItem("conversationHistory");
-  conversationHistory = storedHistory ? JSON.parse(storedHistory) : [];
-} catch (error) {
-  console.warn("⚠️ Historial de conversación corrupto. Se reinicia.", error);
+  const stored = localStorage.getItem("conversationHistory");
+  conversationHistory = stored ? JSON.parse(stored) : [];
+} catch {
   localStorage.removeItem("conversationHistory");
 }
 
-function insertBeforeIndicator(block) {
-  if (typingIndicator && typingIndicator.parentElement === chatMessages) {
-    chatMessages.insertBefore(block, typingIndicator);
-  } else {
-    chatMessages.appendChild(block);
-  }
-}
-
-/* --------------------------------------------------------------
-   EVENTOS PRINCIPALES
--------------------------------------------------------------- */
+/* -------------------------------------------
+   Eventos
+------------------------------------------- */
 sendButton.addEventListener("click", sendMessage);
 userInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter" && !e.shiftKey) {
@@ -37,9 +32,9 @@ userInput.addEventListener("keydown", (e) => {
 userInput.addEventListener("focus", ocultarPantallaInicio);
 userInput.addEventListener("input", ocultarPantallaInicio);
 
-/* --------------------------------------------------------------
-   INICIALIZACIÓN DE LA PANTALLA
--------------------------------------------------------------- */
+/* -------------------------------------------
+   Inicialización de pantalla
+------------------------------------------- */
 window.addEventListener("DOMContentLoaded", () => {
   const modal = document.getElementById("modal");
   const confirmButton = document.getElementById("confirmButton");
@@ -58,15 +53,13 @@ window.addEventListener("DOMContentLoaded", () => {
       modal.classList.remove("show");
       setTimeout(() => {
         modal.classList.add("hidden");
-        Array.from(chatMessages.querySelectorAll(".message")).forEach((node) =>
-          node.remove()
-        );
-        if (typingIndicator && !chatMessages.contains(typingIndicator)) {
-          chatMessages.appendChild(typingIndicator);
-        }
+        Array.from(chatMessages.querySelectorAll(".message")).forEach((n) => n.remove());
         conversationHistory = [];
         localStorage.removeItem("conversationHistory");
-        appendMessageGradual("Hola 👋 Soy MITIGA. ¿Qué cambio o situación reciente te gustaría analizar hoy?", "bot");
+        appendMessageGradual(
+          "Hola 👋 Soy MITIGA. ¿Qué cambio o situación reciente te gustaría analizar hoy?",
+          "bot"
+        );
       }, 300);
     });
   }
@@ -78,24 +71,18 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Cargar historial previo
-  if (conversationHistory.length > 0) {
-    conversationHistory.forEach((msg) => {
-      appendMessage(msg.content, msg.role === "user" ? "user" : "bot");
-    });
+  // Renderizar historial
+  for (const msg of conversationHistory) {
+    appendMessage(msg.content, msg.role);
   }
 });
 
-/* --------------------------------------------------------------
-   ENVÍO DE MENSAJE
--------------------------------------------------------------- */
+/* -------------------------------------------
+   ENVÍO DE MENSAJE (INTEGRADO CON WORKER V3)
+------------------------------------------- */
 async function sendMessage() {
   const userText = userInput.value.trim();
-  if (!userText) return;
-
-  if (sendButton.disabled) {
-    return;
-  }
+  if (!userText || sendButton.disabled) return;
 
   appendMessage(userText, "user");
   userInput.value = "";
@@ -108,32 +95,31 @@ async function sendMessage() {
   conversationHistory.push({ role: "user", content: userText });
   localStorage.setItem("conversationHistory", JSON.stringify(conversationHistory));
 
-  // 🔹 Limitar el historial para evitar exceso de tokens
-  const MAX_HISTORY = 6;
-  conversationHistory = conversationHistory.slice(-MAX_HISTORY);
+  // Limitar historial para evitar tokens excesivos
+  conversationHistory = conversationHistory.slice(-8);
 
   let timeoutId;
 
   try {
     sendButton.disabled = true;
 
-    if (activeRequestController) {
-      activeRequestController.abort();
-    }
+    if (activeRequestController) activeRequestController.abort();
 
     const controller = new AbortController();
     activeRequestController = controller;
+
     timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
     const res = await fetch(API_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: userText }),
-      signal: controller.signal,
+      body: JSON.stringify({
+        messages: conversationHistory
+      }),
+      signal: controller.signal
     });
 
     clearTimeout(timeoutId);
-    timeoutId = null;
     activeRequestController = null;
 
     if (!res.ok) {
@@ -142,39 +128,35 @@ async function sendMessage() {
     }
 
     const data = await res.json();
-    typingIndicator.classList.remove("show");
     typingIndicator.classList.add("hidden");
 
-    const botText =
-      data?.choices?.[0]?.message?.content || "No se pudo obtener respuesta de MITIGA.";
+    const botText = data?.reply || "No se pudo obtener respuesta de MITIGA.";
 
     conversationHistory.push({ role: "assistant", content: botText });
     localStorage.setItem("conversationHistory", JSON.stringify(conversationHistory));
 
     await appendMessageGradual(botText, "bot");
+
   } catch (error) {
-    const isAbortError = error.name === "AbortError";
-    console.error("❌ Error al conectar con MITIGA:", error);
-    typingIndicator.classList.remove("show");
     typingIndicator.classList.add("hidden");
 
-    const errorMessage = isAbortError
-      ? "La solicitud tardó demasiado y se canceló. Intenta nuevamente."
-      : (error.message || "Error al conectar con MITIGA. Intenta nuevamente.");
+    const errorMessage =
+      error.name === "AbortError"
+        ? "La solicitud tardó demasiado y se canceló. Intenta nuevamente."
+        : error.message || "Error al conectar con MITIGA. Intenta nuevamente.";
 
     appendMessage(errorMessage, "bot");
+
   } finally {
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-    }
+    if (timeoutId) clearTimeout(timeoutId);
     activeRequestController = null;
     sendButton.disabled = false;
   }
 }
 
-/* --------------------------------------------------------------
-   UTILIDADES DE INTERFAZ
--------------------------------------------------------------- */
+/* -------------------------------------------
+   INTERFAZ Y FORMATO
+------------------------------------------- */
 function ocultarPantallaInicio() {
   if (startScreen) {
     startScreen.classList.add("hidden");
@@ -182,9 +164,6 @@ function ocultarPantallaInicio() {
   }
 }
 
-/* --------------------------------------------------------------
-   GESTIÓN DE MENSAJES
--------------------------------------------------------------- */
 function createBotHeader() {
   const header = document.createElement("div");
   header.classList.add("bot-header");
@@ -208,44 +187,44 @@ function appendMessage(text, sender = "bot") {
   content.classList.add("message-content");
   content.innerHTML = formatRichText(text);
   block.appendChild(content);
-  insertBeforeIndicator(block);
 
-  // Auto-scroll
+  chatMessages.appendChild(block);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-/* --------------------------------------------------------------
-   EFECTO DE ESCRITURA GRADUAL
--------------------------------------------------------------- */
+/* -------------------------------------------
+   EFECTO DE ESCRITURA
+------------------------------------------- */
 async function appendMessageGradual(text, sender = "bot") {
-  const partes = dividirTextoNatural(text);
-  let esPrimerBloque = true;
-  for (const parte of partes) {
+  const parts = dividirTextoNatural(text);
+  let first = true;
+
+  for (const part of parts) {
     const block = document.createElement("div");
     block.classList.add("message", sender);
 
-    if (sender === "bot" && esPrimerBloque) {
+    if (sender === "bot" && first) {
       block.classList.add("has-header");
       block.appendChild(createBotHeader());
-      esPrimerBloque = false;
+      first = false;
     }
 
     const content = document.createElement("div");
     content.classList.add("message-content");
     block.appendChild(content);
-    insertBeforeIndicator(block);
+
+    chatMessages.appendChild(block);
     chatMessages.scrollTop = chatMessages.scrollHeight;
 
-    await mostrarGradualmente(content, formatRichText(parte));
+    await mostrarGradualmente(content, formatRichText(part));
     await new Promise((r) => setTimeout(r, 250));
   }
 }
 
-/* --------------------------------------------------------------
-   UTILIDADES DE FORMATO Y DIVISIÓN DE TEXTO
--------------------------------------------------------------- */
+/* -------------------------------------------
+   UTILIDADES DE FORMATO
+------------------------------------------- */
 function dividirTextoNatural(text) {
-  // Divide en frases largas o párrafos, sin romper frases cortas.
   return text
     .split(/(?<=[.!?])\s+(?=[A-ZÁÉÍÓÚ¿])/g)
     .map((t) => t.trim())
@@ -254,15 +233,14 @@ function dividirTextoNatural(text) {
 
 function mostrarGradualmente(element, htmlText) {
   return new Promise((resolve) => {
-    const tempDiv = document.createElement("div");
-    tempDiv.innerHTML = htmlText;
-    const plainText = tempDiv.textContent || tempDiv.innerText || "";
+    const temp = document.createElement("div");
+    temp.innerHTML = htmlText;
+    const plain = temp.textContent || "";
     let i = 0;
-    element.innerHTML = "";
 
     const interval = setInterval(() => {
-      if (i < plainText.length) {
-        element.innerHTML = plainText.slice(0, i) + "▋";
+      if (i < plain.length) {
+        element.innerHTML = plain.slice(0, i) + "▋";
         i++;
       } else {
         clearInterval(interval);
@@ -274,7 +252,6 @@ function mostrarGradualmente(element, htmlText) {
 }
 
 function formatRichText(text) {
-  // Permite negritas, viñetas naturales y saltos de línea.
   return text
     .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>")
     .replace(/(^|\n)- (.*?)(?=\n|$)/g, "<ul><li>$2</li></ul>")
