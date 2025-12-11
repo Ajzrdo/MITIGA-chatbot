@@ -85,7 +85,7 @@ async function sendMessage() {
 
     appendMessage(userText, "user");
     userInput.value = "";
-    ocultarPantallinicio();
+    ocultarPantallaInicio();
 
     typingIndicator.classList.remove("hidden");
     chatMessages.scrollTop = chatMessages.scrollHeight;
