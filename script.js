@@ -1,4 +1,4 @@
-const API_URL = "https://api.mitiga-alzheimer.com";
+const API_URL = "https://asistente.mitiga-alzheimer.com/api/";
 const REQUEST_TIMEOUT_MS = 45000;
 const chatMessages = document.getElementById("chatMessages");
 const userInput = document.getElementById("userInput");
