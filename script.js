@@ -81,6 +81,7 @@ window.addEventListener("DOMContentLoaded", () => {
    ENVÍO DE MENSAJE (INTEGRADO CON WORKER V3)
 ------------------------------------------- */
 async function sendMessage() {
+    const userText = userInput.value.trim();
     if (!userText || sendButton.disabled) return;
 
     appendMessage(userText, "user");
@@ -93,7 +94,6 @@ async function sendMessage() {
     conversationHistory.push({ role: "user", content: userText });
     localStorage.setItem("conversationHistory", JSON.stringify(conversationHistory));
 
-    // Evitar que la conversación crezca demasiado
     if (conversationHistory.length > 20) {
         conversationHistory = conversationHistory.slice(-20);
     }
@@ -104,7 +104,6 @@ async function sendMessage() {
         sendButton.disabled = true;
 
         if (activeRequestController) activeRequestController.abort();
-
         const controller = new AbortController();
         activeRequestController = controller;
 
@@ -113,9 +112,7 @@ async function sendMessage() {
         const res = await fetch(API_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                messages: conversationHistory
-            }),
+            body: JSON.stringify({ messages: conversationHistory }),
             signal: controller.signal
         });
 
