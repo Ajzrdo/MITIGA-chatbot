@@ -1,93 +1,126 @@
-// ------------------------------------------------------------
+// =============================
 // CONFIG
-// ------------------------------------------------------------
-const API_URL = "https://api.mitiga-alzheimer.com"; // Worker correcto
+// =============================
+const API_URL = "https://api.mitiga-alzheimer.com/api/chat";
+const REQUEST_TIMEOUT_MS = 20000;
 
-// Elementos del DOM
+// =============================
+// ELEMENTOS DOM
+// =============================
 const userInput = document.getElementById("userInput");
 const sendButton = document.getElementById("sendButton");
 const chatMessages = document.getElementById("chatMessages");
 const typingIndicator = document.getElementById("typingIndicator");
+const startScreen = document.getElementById("start-screen");
 
-// Historial de conversación
-let conversationHistory = JSON.parse(localStorage.getItem("conversationHistory")) || [];
+// =============================
+// ESTADO
+// =============================
+let conversationHistory = JSON.parse(localStorage.getItem("conversationHistory") || "[]");
+let activeRequestController = null;
 
-// ------------------------------------------------------------
-// FUNCIONES AUXILIARES (UI)
-// ------------------------------------------------------------
-function appendMessage(text, sender) {
-    const bubble = document.createElement("div");
-    bubble.className = sender === "user" ? "user-message" : "bot-message";
-    bubble.innerText = text;
-    chatMessages.appendChild(bubble);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+// =============================
+// UTILIDAD: Añadir mensajes al chat
+// =============================
+function appendMessage(sender, text) {
+  const msg = document.createElement("div");
+  msg.classList.add("message", sender);
+
+  if (sender === "bot") {
+    msg.innerHTML = `
+      <div class="bot-header">
+        <img src="images/mitiga-icon.png">
+        <span>MITIGA</span>
+      </div>
+      <div class="message-content">${text}</div>
+    `;
+  } else {
+    msg.innerHTML = `<div class="message-content">${text}</div>`;
+  }
+
+  chatMessages.appendChild(msg);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-async function appendMessageGradual(text, sender) {
-    const bubble = document.createElement("div");
-    bubble.className = sender === "user" ? "user-message" : "bot-message";
-    bubble.innerHTML = "";
-    chatMessages.appendChild(bubble);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+// Restaurar conversación previa
+conversationHistory.forEach(m => appendMessage(m.role, m.content));
 
-    for (let i = 0; i <= text.length; i++) {
-        bubble.innerText = text.substring(0, i);
-        await new Promise(res => setTimeout(res, 10));
-    }
-}
-
-// ------------------------------------------------------------
-// ENVÍO DE MENSAJE
-// ------------------------------------------------------------
+// =============================
+// FUNCIÓN PRINCIPAL: enviar mensaje
+// =============================
 async function sendMessage() {
-    const text = userInput.value.trim();   // ← ESTE ERA EL ERROR PRINCIPAL
+  const userText = userInput.value.trim();
+  if (!userText) return;
 
-    if (!text) return;
+  startScreen.classList.add("hidden");
 
-    appendMessage(text, "user");
-    userInput.value = "";
-    typingIndicator.classList.remove("hidden");
+  // Mostrar mensaje del usuario
+  appendMessage("user", userText);
 
-    conversationHistory.push({ role: "user", content: text });
-    localStorage.setItem("conversationHistory", JSON.stringify(conversationHistory));
+  // Guardar en historial
+  conversationHistory.push({ role: "user", content: userText });
+  localStorage.setItem("conversationHistory", JSON.stringify(conversationHistory));
 
-    try {
-        const res = await fetch(API_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ messages: conversationHistory })
-        });
+  userInput.value = "";
 
-        if (!res.ok) {
-            appendMessage("Error: HTTP " + res.status, "bot");
-            typingIndicator.classList.add("hidden");
-            return;
-        }
+  // Mostrar indicador
+  typingIndicator.classList.remove("hidden");
 
-        const data = await res.json();
-        const botText = data.reply || "MITIGA no pudo responder correctamente.";
+  // Cancelar petición anterior si existe
+  if (activeRequestController) activeRequestController.abort();
+  const controller = new AbortController();
+  activeRequestController = controller;
 
-        conversationHistory.push({ role: "assistant", content: botText });
-        localStorage.setItem("conversationHistory", JSON.stringify(conversationHistory));
+  // Construir payload
+  const payload = {
+    messages: conversationHistory
+  };
 
-        await appendMessageGradual(botText, "bot");
-
-    } catch (error) {
-        appendMessage("Error de conexión con MITIGA.", "bot");
-        console.error(error);
-    }
+  try {
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      signal: controller.signal
+    });
 
     typingIndicator.classList.add("hidden");
+
+    if (!res.ok) {
+      appendMessage("bot", `Error HTTP ${res.status}`);
+      return;
+    }
+
+    const data = await res.json();
+    const botReply = data.reply || "MITIGA no pudo responder.";
+
+    appendMessage("bot", botReply);
+
+    conversationHistory.push({ role: "assistant", content: botReply });
+    localStorage.setItem("conversationHistory", JSON.stringify(conversationHistory));
+
+  } catch (err) {
+    typingIndicator.classList.add("hidden");
+    appendMessage("bot", "Error de conexión con MITIGA.");
+  }
 }
 
-// ------------------------------------------------------------
+// =============================
 // EVENTOS
-// ------------------------------------------------------------
+// =============================
 sendButton.addEventListener("click", sendMessage);
 
-userInput.addEventListener("keypress", e => {
-    if (e.key === "Enter") {
-        e.preventDefault();
-        sendMessage();
-    }
+userInput.addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+
+// Nuevo chat
+document.getElementById("newChat").addEventListener("click", () => {
+  localStorage.removeItem("conversationHistory");
+  conversationHistory = [];
+  chatMessages.innerHTML = "";
+  startScreen.classList.remove("hidden");
 });
