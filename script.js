@@ -1,7 +1,7 @@
 // =============================
 // CONFIG
 // =============================
-const API_URL = "https://api.mitiga-alzheimer.com/api/chat";
+const API_URL = "https://api.mitiga-alzheimer.com";
 const REQUEST_TIMEOUT_MS = 20000;
 
 // =============================
