@@ -20,6 +20,35 @@ let conversationHistory = JSON.parse(localStorage.getItem("conversationHistory")
 let activeRequestController = null;
 
 // =============================
+// FORMATEO A VIÑETAS (cuando procede)
+// =============================
+function formatAsBullets(text) {
+  if (text.length < 220) return text;
+
+  const parts = text.split(/\.\s+/);
+  if (parts.length < 3) return text;
+
+  return parts.map(p => `• ${p.trim()}.`).join("<br>");
+}
+
+// =============================
+// Añadir animación fade-in a mensajes
+// =============================
+function fadeIn(element) {
+  element.classList.add("fade-in");
+  setTimeout(() => element.classList.remove("fade-in"), 600);
+}
+
+// =============================
+// Añadir latido suave al icono MITIGA
+// =============================
+function heartbeatIcon(msgElement) {
+  const icon = msgElement.querySelector(".bot-header img");
+  if (!icon) return;
+  icon.classList.add("mitiga-heartbeat");
+}
+
+// =============================
 // UTILIDAD: Añadir mensajes al chat
 // =============================
 function appendMessage(sender, text) {
@@ -27,22 +56,30 @@ function appendMessage(sender, text) {
   msg.classList.add("message", sender);
 
   if (sender === "bot") {
+    const formatted = formatAsBullets(text);
+
     msg.innerHTML = `
       <div class="bot-header">
         <img src="images/mitiga-icon.png">
         <span>MITIGA</span>
       </div>
-      <div class="message-content">${text}</div>
+      <div class="message-content">${formatted}</div>
     `;
+
+    chatMessages.appendChild(msg);
+    fadeIn(msg);
+    heartbeatIcon(msg);
+
   } else {
     msg.innerHTML = `<div class="message-content">${text}</div>`;
+    chatMessages.appendChild(msg);
+    fadeIn(msg);
   }
 
-  chatMessages.appendChild(msg);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-// Restaurar conversación previa
+// Cargar historial previo
 conversationHistory.forEach(m => appendMessage(m.role, m.content));
 
 // =============================
@@ -54,27 +91,20 @@ async function sendMessage() {
 
   startScreen.classList.add("hidden");
 
-  // Mostrar mensaje del usuario
   appendMessage("user", userText);
 
-  // Guardar en historial
   conversationHistory.push({ role: "user", content: userText });
   localStorage.setItem("conversationHistory", JSON.stringify(conversationHistory));
 
   userInput.value = "";
 
-  // Mostrar indicador
   typingIndicator.classList.remove("hidden");
 
-  // Cancelar petición anterior si existe
   if (activeRequestController) activeRequestController.abort();
   const controller = new AbortController();
   activeRequestController = controller;
 
-  // Construir payload
-  const payload = {
-    messages: conversationHistory
-  };
+  const payload = { messages: conversationHistory };
 
   try {
     const res = await fetch(API_URL, {
