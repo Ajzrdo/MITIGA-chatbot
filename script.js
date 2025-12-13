@@ -43,7 +43,7 @@ function fadeIn(element) {
 // Añadir latido suave al icono MITIGA
 // =============================
 function heartbeatIcon(msgElement) {
-  const icon = msgElement.querySelector(".bot-header img");
+  const icon = msgElement.querySelector(".mitiga-logo");
   if (!icon) return;
   icon.classList.add("mitiga-heartbeat");
 }
@@ -55,20 +55,21 @@ function appendMessage(sender, text) {
   const msg = document.createElement("div");
   msg.classList.add("message", sender);
 
-  if (sender === "bot") {
+if (sender === "bot") {
     const formatted = formatAsBullets(text);
 
     msg.innerHTML = `
       <div class="bot-header">
-        <img src="images/mitiga-icon.png">
+        <img src="images/mitiga-icon.png" class="mitiga-logo">
         <span>MITIGA</span>
       </div>
       <div class="message-content">${formatted}</div>
     `;
 
     chatMessages.appendChild(msg);
-    fadeIn(msg);
-    heartbeatIcon(msg);
+
+    fadeIn(msg);              // Animación de entrada
+    heartbeatIcon(msg);       // Latido del icono
 
   } else {
     msg.innerHTML = `<div class="message-content">${text}</div>`;
