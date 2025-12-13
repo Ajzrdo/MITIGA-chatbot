@@ -13,6 +13,11 @@ const chatMessages = document.getElementById("chatMessages");
 const typingIndicator = document.getElementById("typingIndicator");
 const startScreen = document.getElementById("start-screen");
 
+// Modal
+const modal = document.getElementById("modal");
+const confirmButton = document.getElementById("confirmButton");
+const cancelButton = document.getElementById("cancelButton");
+
 // =============================
 // ESTADO
 // =============================
@@ -23,16 +28,21 @@ let activeRequestController = null;
 // FORMATEO A VIÑETAS (cuando procede)
 // =============================
 function formatAsBullets(text) {
+  if (!text) return "";
+
+  // Si ya contiene viñetas, no hacemos nada.
+  if (text.includes("•")) return text;
+
   if (text.length < 220) return text;
 
-  const parts = text.split(/\.\s+/);
+  const parts = text.split(/\.\s+/).filter(p => p.trim() !== "");
   if (parts.length < 3) return text;
 
   return parts.map(p => `• ${p.trim()}.`).join("<br>");
 }
 
 // =============================
-// Añadir animación fade-in a mensajes
+// Animación fade-in
 // =============================
 function fadeIn(element) {
   element.classList.add("fade-in");
@@ -40,7 +50,7 @@ function fadeIn(element) {
 }
 
 // =============================
-// Añadir latido suave al icono MITIGA
+// Animación heartbeat del icono
 // =============================
 function heartbeatIcon(msgElement) {
   const icon = msgElement.querySelector(".mitiga-logo");
@@ -49,13 +59,13 @@ function heartbeatIcon(msgElement) {
 }
 
 // =============================
-// UTILIDAD: Añadir mensajes al chat
+// Añadir mensajes
 // =============================
 function appendMessage(sender, text) {
   const msg = document.createElement("div");
   msg.classList.add("message", sender);
 
-if (sender === "bot") {
+  if (sender === "bot") {
     const formatted = formatAsBullets(text);
 
     msg.innerHTML = `
@@ -68,8 +78,8 @@ if (sender === "bot") {
 
     chatMessages.appendChild(msg);
 
-    fadeIn(msg);              // Animación de entrada
-    heartbeatIcon(msg);       // Latido del icono
+    fadeIn(msg);
+    heartbeatIcon(msg);
 
   } else {
     msg.innerHTML = `<div class="message-content">${text}</div>`;
@@ -80,26 +90,39 @@ if (sender === "bot") {
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
+// =============================
 // Cargar historial previo
+// =============================
 conversationHistory.forEach(m => appendMessage(m.role, m.content));
 
 // =============================
-// FUNCIÓN PRINCIPAL: enviar mensaje
+// Mostrar / ocultar indicador MITIGA
+// =============================
+function showTyping() {
+  typingIndicator.classList.remove("hidden");
+  typingIndicator.classList.add("show");
+}
+
+function hideTyping() {
+  typingIndicator.classList.add("hidden");
+  typingIndicator.classList.remove("show");
+}
+
+// =============================
+// ENVÍO PRINCIPAL
 // =============================
 async function sendMessage() {
   const userText = userInput.value.trim();
   if (!userText) return;
 
   startScreen.classList.add("hidden");
-
   appendMessage("user", userText);
 
   conversationHistory.push({ role: "user", content: userText });
   localStorage.setItem("conversationHistory", JSON.stringify(conversationHistory));
 
   userInput.value = "";
-
-  typingIndicator.classList.remove("hidden");
+  showTyping();
 
   if (activeRequestController) activeRequestController.abort();
   const controller = new AbortController();
@@ -115,7 +138,7 @@ async function sendMessage() {
       signal: controller.signal
     });
 
-    typingIndicator.classList.add("hidden");
+    hideTyping();
 
     if (!res.ok) {
       appendMessage("bot", `Error HTTP ${res.status}`);
@@ -131,10 +154,33 @@ async function sendMessage() {
     localStorage.setItem("conversationHistory", JSON.stringify(conversationHistory));
 
   } catch (err) {
-    typingIndicator.classList.add("hidden");
+    hideTyping();
     appendMessage("bot", "Error de conexión con MITIGA.");
   }
 }
+
+// =============================
+// NUEVO CHAT (con confirmación)
+// =============================
+document.getElementById("newChat").addEventListener("click", () => {
+  modal.classList.remove("hidden");
+  modal.classList.add("show");
+});
+
+confirmButton.addEventListener("click", () => {
+  modal.classList.remove("show");
+  modal.classList.add("hidden");
+
+  localStorage.removeItem("conversationHistory");
+  conversationHistory = [];
+  chatMessages.innerHTML = "";
+  startScreen.classList.remove("hidden");
+});
+
+cancelButton.addEventListener("click", () => {
+  modal.classList.remove("show");
+  modal.classList.add("hidden");
+});
 
 // =============================
 // EVENTOS
@@ -146,12 +192,4 @@ userInput.addEventListener("keydown", e => {
     e.preventDefault();
     sendMessage();
   }
-});
-
-// Nuevo chat
-document.getElementById("newChat").addEventListener("click", () => {
-  localStorage.removeItem("conversationHistory");
-  conversationHistory = [];
-  chatMessages.innerHTML = "";
-  startScreen.classList.remove("hidden");
 });
