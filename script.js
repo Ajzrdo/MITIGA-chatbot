@@ -21,22 +21,10 @@ const cancelButton = document.getElementById("cancelButton");
 // =============================
 // ESTADO
 // =============================
-let conversationHistory = JSON.parse(localStorage.getItem("conversationHistory") || "[]");
+let conversationHistory = JSON.parse(
+  localStorage.getItem("conversationHistory") || "[]"
+);
 let activeRequestController = null;
-
-// =============================
-// FORMATEO A VIÑETAS
-// =============================
-function formatAsBullets(text) {
-  if (!text) return "";
-  if (text.includes("•")) return text;
-  if (text.length < 220) return text;
-
-  const parts = text.split(/\.\s+/).filter(p => p.trim());
-  if (parts.length < 3) return text;
-
-  return parts.map(p => `• ${p.trim()}.`).join("<br>");
-}
 
 // =============================
 // ANIMACIONES
@@ -64,7 +52,7 @@ function appendMessage(sender, text) {
         <img src="images/mitiga-icon.png" class="mitiga-logo">
         <span>MITIGA</span>
       </div>
-      <div class="message-content">${formatAsBullets(text)}</div>
+      <div class="message-content">${text}</div>
     `;
     heartbeatIcon(msg);
   } else {
@@ -82,7 +70,7 @@ function appendMessage(sender, text) {
 conversationHistory.forEach(m => appendMessage(m.role, m.content));
 
 // =============================
-// TYPING INDICATOR (CLAVE)
+// TYPING INDICATOR
 // =============================
 function showTyping() {
   typingIndicator.classList.remove("hidden");
@@ -107,7 +95,10 @@ async function sendMessage() {
   appendMessage("user", userText);
 
   conversationHistory.push({ role: "user", content: userText });
-  localStorage.setItem("conversationHistory", JSON.stringify(conversationHistory));
+  localStorage.setItem(
+    "conversationHistory",
+    JSON.stringify(conversationHistory)
+  );
 
   userInput.value = "";
   showTyping();
@@ -135,8 +126,14 @@ async function sendMessage() {
     const botReply = data.reply || "MITIGA no pudo responder.";
 
     appendMessage("bot", botReply);
-    conversationHistory.push({ role: "assistant", content: botReply });
-    localStorage.setItem("conversationHistory", JSON.stringify(conversationHistory));
+    conversationHistory.push({
+      role: "assistant",
+      content: botReply
+    });
+    localStorage.setItem(
+      "conversationHistory",
+      JSON.stringify(conversationHistory)
+    );
 
   } catch {
     hideTyping();
