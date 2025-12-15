@@ -61,7 +61,18 @@ function appendMessage(sender, text) {
 
   chatMessages.appendChild(msg);
   fadeIn(msg);
-  chatMessages.scrollTop = chatMessages.scrollHeight;
+
+  // 👉 SCROLL CONTROLADO
+  if (sender === "user") {
+    // Usuario: bajar al final (normal)
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  } else {
+    // Bot: mostrar el INICIO del mensaje
+    msg.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
+  }
 }
 
 // =============================
@@ -126,10 +137,12 @@ async function sendMessage() {
     const botReply = data.reply || "MITIGA no pudo responder.";
 
     appendMessage("bot", botReply);
+
     conversationHistory.push({
       role: "assistant",
       content: botReply
     });
+
     localStorage.setItem(
       "conversationHistory",
       JSON.stringify(conversationHistory)
