@@ -95,11 +95,15 @@
         line-height: 1.55;
       }
 
-      /* Aire adicional entre bloques de texto */
+      /* Aire solo entre párrafos largos, no entre títulos */
       .message-content br + br {
         display: block;
-        content: "";
-        margin-bottom: 0.75rem;
+        margin-bottom: 0.5rem;
+      }
+
+      /* Reduce espacio cuando dos líneas seguidas empiezan en negrita */
+      .message-content b + br + b {
+        display: inline;
       }
       
       .message.user {
