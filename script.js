@@ -54,26 +54,19 @@ function appendMessage(sender, text) {
       </div>
       <div class="message-content">${text}</div>
     `;
-    heartbeatIcon(msg);
   } else {
     msg.innerHTML = `<div class="message-content">${text}</div>`;
   }
 
   chatMessages.appendChild(msg);
-  fadeIn(msg);
 
-  // 👉 SCROLL CONTROLADO
   if (sender === "user") {
-    // Usuario: bajar al final (normal)
     chatMessages.scrollTop = chatMessages.scrollHeight;
   } else {
-    // Bot: mostrar el INICIO del mensaje
-    msg.scrollIntoView({
-      behavior: "smooth",
-      block: "start"
-    });
+    msg.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 }
+
 
 // =============================
 // HISTORIAL
