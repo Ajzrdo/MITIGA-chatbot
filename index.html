@@ -95,17 +95,32 @@
         line-height: 1.55;
       }
 
-      /* Aire solo entre párrafos largos, no entre títulos */
-      .message-content br + br {
-        display: block;
-        margin-bottom: 0.35rem;
-      }
+/* ============================= */
+/*  LISTAS NUMERADAS · MITIGA   */
+/* ============================= */
 
-      /* Reduce espacio cuando dos líneas seguidas empiezan en negrita */
-      .message-content b + br + b {
-        display: inline;
-      }
-      
+/* Líneas que empiezan por número + punto */
+.message-content {
+  line-height: 1.55;
+}
+
+/* Dar aire antes de líneas numeradas */
+.message-content {
+  --mitiga-spacing: 0.6rem;
+}
+
+/* Truco seguro: usar <br><br> como separador visual */
+.message-content br + br {
+  display: block;
+  margin-bottom: var(--mitiga-spacing);
+}      
+
+/* Reducir hueco justo tras líneas numeradas */
+.message-content br + br + br {
+  display: none;
+}
+
+
       .message.user {
         align-self: flex-end;
         background: linear-gradient(140deg, #423535, #1f232b);
