@@ -14,7 +14,7 @@
 
     body {
       margin: 0;
-      font-family: "Segoe UI", sans-serif;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
       background: url("images/mitiga-background.jpg") center center / cover fixed no-repeat;
       color: #333;
     }
@@ -27,7 +27,9 @@
       backdrop-filter: blur(4px);
     }
 
-    /* CABECERA */
+    /* ============================= */
+    /* CABECERA                      */
+    /* ============================= */
     header {
       display: flex;
       align-items: center;
@@ -63,7 +65,9 @@
       cursor: pointer;
     }
 
-    /* MENSAJES */
+    /* ============================= */
+    /* MENSAJES                      */
+    /* ============================= */
     .chat-messages {
       flex: 1;
       overflow-y: auto;
@@ -75,7 +79,7 @@
 
     .message {
       box-sizing: border-box;
-      padding: 10px 14px;
+      padding: 12px 16px;
       border-radius: 14px;
       word-wrap: break-word;
       max-width: 90%;
@@ -83,23 +87,13 @@
 
     .message.bot {
       align-self: flex-start;
-      background: rgba(255, 255, 255, 0.92);
+      background: #ffffff;
       border: 1px solid #eee;
       margin: 6px auto 6px 0;
       box-shadow: 0 2px 6px rgba(88, 19, 57, 0.15);
       width: 90%;
       max-width: 720px;
-    }
-
-    .message-content {
-      white-space: pre-wrap;
-      line-height: 1.55;
-    }
-
-    /* SOLO esto: color MITIGA en negritas */
-    .message-content strong {
-      color: var(--mitiga-color);
-      font-weight: 600;
+      isolation: isolate;
     }
 
     .message.user {
@@ -114,7 +108,7 @@
     .bot-header {
       display: flex;
       align-items: center;
-      margin-bottom: 4px;
+      margin-bottom: 6px;
     }
 
     .bot-header img {
@@ -128,7 +122,51 @@
       font-size: 14px;
     }
 
-    /* FOOTER */
+    /* ============================= */
+    /* MARKDOWN • ESTILO CHATGPT     */
+    /* ============================= */
+    .message-content {
+      white-space: pre-wrap;
+      line-height: 1.6;
+      font-size: 15.5px;
+    }
+
+    .message-content p {
+      margin: 0.6em 0;
+    }
+
+    .message-content p:first-child {
+      margin-top: 0;
+    }
+
+    .message-content ul,
+    .message-content ol {
+      margin: 0.6em 0 0.6em 1.4em;
+      padding-left: 1.2em;
+    }
+
+    .message-content li {
+      margin: 0.35em 0;
+    }
+
+    .message-content ul {
+      list-style-type: disc;
+    }
+
+    .message-content ol {
+      list-style-type: decimal;
+    }
+
+    .message-content strong {
+      color: var(--mitiga-color);
+      font-weight: 600;
+      display: inline-block;
+      margin-bottom: 0.2em;
+    }
+
+    /* ============================= */
+    /* FOOTER / INPUT                */
+    /* ============================= */
     footer {
       display: flex;
       align-items: center;
@@ -142,9 +180,15 @@
       resize: none;
       border-radius: 8px;
       border: 1px solid #ccc;
-      padding: 10px;
-      font-size: 15px;
+      padding: 10px 12px;
+      font-size: 16px;
+      line-height: 1.4;
       min-height: 40px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    }
+
+    textarea::placeholder {
+      color: #999;
     }
 
     #sendButton {
@@ -157,7 +201,9 @@
       cursor: pointer;
     }
 
-    /* PANTALLA INICIAL */
+    /* ============================= */
+    /* PANTALLA INICIAL              */
+    /* ============================= */
     #start-screen {
       position: fixed;
       top: 0;
@@ -172,11 +218,16 @@
       backdrop-filter: blur(3px);
       z-index: 5;
       text-align: center;
+      padding-inline: 18px;
     }
 
     #start-screen img {
       width: 100px;
       margin-bottom: 10px;
+    }
+
+    #start-screen h2 {
+      max-width: 32rem;
     }
 
     #start-screen.hidden {
@@ -186,7 +237,7 @@
     }
 
     /* ============================= */
-    /*   CORRECCIÓN • HIDDEN/SHOW   */
+    /* UTILIDADES                    */
     /* ============================= */
     .hidden {
       display: none !important;
@@ -196,9 +247,6 @@
       display: flex !important;
     }
 
-    /* ============================= */
-    /*  ANIMACIÓN FADE-IN MENSAJES  */
-    /* ============================= */
     .fade-in {
       animation: fadeInMsg 0.45s ease;
     }
@@ -215,9 +263,6 @@
       }
     }
 
-    /* ============================= */
-    /*   ICONO LATIENDO MITIGA      */
-    /* ============================= */
     .mitiga-heartbeat {
       animation: heartbeat 1.6s ease-in-out infinite;
     }
@@ -235,12 +280,12 @@
     }
 
     /* ============================= */
-    /*   INDICADOR “PREPARANDO…”    */
+    /* INDICADOR “PREPARANDO…”       */
     /* ============================= */
     #typingIndicator {
       align-items: center;
       gap: 8px;
-      background: rgba(255, 255, 255, 0.75);
+      background: #ffffff;
       border: 1px solid rgba(88, 19, 57, 0.12);
       border-radius: 14px;
       padding: 8px 12px;
@@ -273,7 +318,9 @@
       }
     }
 
-    /* MODAL */
+    /* ============================= */
+    /* MODAL                         */
+    /* ============================= */
     .modal {
       position: fixed;
       top: 0;
@@ -297,46 +344,6 @@
       padding: 24px 28px;
       text-align: center;
       max-width: 400px;
-    }
-
-    /* ============================= */
-    /*  MARKDOWN • LISTAS GPT STYLE */
-    /* ============================= */
-    .message-content ul,
-    .message-content ol {
-      margin: 0.6em 0 0.6em 1.4em;
-      padding-left: 1.2em;
-    }
-
-    .message-content li {
-      margin: 0.3em 0;
-    }
-
-    .message-content ul {
-      list-style-type: disc;
-    }
-
-    .message-content ol {
-      list-style-type: decimal;
-    }
-
-    /* ============================= */
-    /*  FIX • FONDO MENSAJES BOT    */
-    /* ============================= */
-    .message.bot {
-      background-clip: padding-box;
-      isolation: isolate;
-    }
-
-    /* ============================= */
-    /*  START SCREEN • MOBILE PADDING */
-    /* ============================= */
-    #start-screen {
-      padding-inline: 18px;
-    }
-
-    #start-screen h2 {
-      max-width: 16rem;
     }
   </style>
 </head>
@@ -377,7 +384,6 @@
   </div>
 
   <script src="script.js?v=typing-fix-01"></script>
-
 </body>
 
 </html>
