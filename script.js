@@ -71,7 +71,10 @@ function appendMessage(sender, text) {
 // =============================
 // HISTORIAL
 // =============================
-conversationHistory.forEach(m => appendMessage(m.role, m.content));
+conversationHistory.forEach(m => {
+  const sender = m.role === "assistant" ? "bot" : "user";
+  appendMessage(sender, m.content);
+});
 
 // =============================
 // TYPING INDICATOR
@@ -81,6 +84,9 @@ function showTyping() {
   typingIndicator.classList.add("show");
   chatMessages.appendChild(typingIndicator);
   chatMessages.scrollTop = chatMessages.scrollHeight;
+
+  const icon = typingIndicator.querySelector(".typing-icon");
+  if (icon) icon.classList.add("mitiga-heartbeat");
 }
 
 function hideTyping() {
