@@ -1,6 +1,45 @@
-// ======================
-// UTILIDADES
-// ======================
+// =============================
+// CONFIG
+// =============================
+const API_URL = "https://api.mitiga-alzheimer.com";
+const REQUEST_TIMEOUT_MS = 20000;
+
+// =============================
+// ELEMENTOS DOM
+// =============================
+const userInput = document.getElementById("userInput");
+const sendButton = document.getElementById("sendButton");
+const chatMessages = document.getElementById("chatMessages");
+const typingIndicator = document.getElementById("typingIndicator");
+const startScreen = document.getElementById("start-screen");
+
+// Modal
+const modal = document.getElementById("modal");
+const confirmButton = document.getElementById("confirmButton");
+const cancelButton = document.getElementById("cancelButton");
+
+// =============================
+// ESTADO
+// =============================
+let conversationHistory = JSON.parse(
+  localStorage.getItem("conversationHistory") || "[]"
+);
+let activeRequestController = null;
+
+// =============================
+// ANIMACIONES
+// =============================
+function fadeIn(element) {
+  element.classList.add("fade-in");
+  setTimeout(() => element.classList.remove("fade-in"), 600);
+}
+
+function heartbeatIcon(msgElement) {
+  const icon = msgElement.querySelector(".mitiga-logo");
+  if (icon) icon.classList.add("mitiga-heartbeat");
+}
+
+// NUEVO — escapar texto del usuario (no Markdown)
 function escapeHTML(str) {
   return str
     .replace(/&/g, "&amp;")
@@ -10,23 +49,9 @@ function escapeHTML(str) {
     .replace(/'/g, "&#039;");
 }
 
-// ======================
-// ELEMENTOS DOM
-// ======================
-const chatMessages = document.querySelector(".chat-messages");
-const chatForm = document.querySelector(".chat-form");
-const chatInput = document.querySelector(".chat-input");
-const newChatBtn = document.querySelector(".new-chat");
-
-// ======================
-// ESTADO
-// ======================
-let conversationId = crypto.randomUUID();
-let isWaitingResponse = false;
-
-// ======================
+// =============================
 // MENSAJES
-// ======================
+// =============================
 function appendMessage(sender, text) {
   const msg = document.createElement("div");
   msg.classList.add("message", sender);
@@ -43,11 +68,14 @@ function appendMessage(sender, text) {
     `;
   }
 
+  // ⬇️ AÑADIR ESTE BLOQUE EXACTO ⬇️
+  // NUEVO — render correcto del mensaje del usuario
   if (sender === "user") {
     msg.innerHTML = `
       <div class="message-content">${escapeHTML(text)}</div>
     `;
   }
+  // ⬆️ FIN DEL PARCHE ⬆️
 
   chatMessages.appendChild(msg);
 
@@ -58,75 +86,122 @@ function appendMessage(sender, text) {
   }
 }
 
-// ======================
-// INDICADOR DE ESCRITURA
-// ======================
-function showTypingIndicator() {
-  const typing = document.createElement("div");
-  typing.className = "message bot typing";
-  typing.id = "typing-indicator";
-
-  typing.innerHTML = `
-    <div class="bot-header">
-      <img src="images/mitiga-icon.png" class="mitiga-logo pulse">
-      <span>MITIGA</span>
-    </div>
-    <div class="message-content">Estoy preparando tu respuesta…</div>
-  `;
-
-  chatMessages.appendChild(typing);
-  typing.scrollIntoView({ behavior: "smooth", block: "start" });
-}
-
-function removeTypingIndicator() {
-  const typing = document.getElementById("typing-indicator");
-  if (typing) typing.remove();
-}
-
-// ======================
-// ENVÍO DE MENSAJES
-// ======================
-chatForm.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  if (isWaitingResponse) return;
-
-  const userMessage = chatInput.value.trim();
-  if (!userMessage) return;
-
-  appendMessage("user", userMessage);
-  chatInput.value = "";
-
-  showTypingIndicator();
-  isWaitingResponse = true;
-
-  try {
-    const response = await fetch("https://api.mitiga-alzheimer.com", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        conversationId,
-        message: userMessage,
-      }),
-    });
-
-    const data = await response.json();
-    removeTypingIndicator();
-    appendMessage("bot", data.reply);
-  } catch (err) {
-    removeTypingIndicator();
-    appendMessage(
-      "bot",
-      "Ha ocurrido un error al procesar tu mensaje. Por favor, inténtalo de nuevo."
-    );
-  } finally {
-    isWaitingResponse = false;
-  }
+// =============================
+// HISTORIAL
+// =============================
+conversationHistory.forEach(m => {
+  const sender = m.role === "assistant" ? "bot" : "user";
+  appendMessage(sender, m.content);
 });
 
-// ======================
+// =============================
+// TYPING INDICATOR
+// =============================
+function showTyping() {
+  typingIndicator.classList.remove("hidden");
+  typingIndicator.classList.add("show");
+  chatMessages.appendChild(typingIndicator);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+
+  const icon = typingIndicator.querySelector(".typing-icon");
+  if (icon) icon.classList.add("mitiga-heartbeat");
+}
+
+function hideTyping() {
+  typingIndicator.classList.add("hidden");
+  typingIndicator.classList.remove("show");
+}
+
+// =============================
+// ENVÍO PRINCIPAL
+// =============================
+async function sendMessage() {
+  const userText = userInput.value.trim();
+  if (!userText) return;
+
+  startScreen.classList.add("hidden");
+  appendMessage("user", userText);
+
+  conversationHistory.push({ role: "user", content: userText });
+  localStorage.setItem(
+    "conversationHistory",
+    JSON.stringify(conversationHistory)
+  );
+
+  userInput.value = "";
+  showTyping();
+
+  if (activeRequestController) activeRequestController.abort();
+  const controller = new AbortController();
+  activeRequestController = controller;
+
+  try {
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages: conversationHistory }),
+      signal: controller.signal
+    });
+
+    hideTyping();
+
+    if (!res.ok) {
+      appendMessage("bot", `Error HTTP ${res.status}`);
+      return;
+    }
+
+    const data = await res.json();
+    const botReply = data.reply || "MITIGA no pudo responder.";
+
+    appendMessage("bot", botReply);
+
+    conversationHistory.push({
+      role: "assistant",
+      content: botReply
+    });
+
+    localStorage.setItem(
+      "conversationHistory",
+      JSON.stringify(conversationHistory)
+    );
+
+  } catch {
+    hideTyping();
+    appendMessage("bot", "Error de conexión con MITIGA.");
+  }
+}
+
+// =============================
 // NUEVO CHAT
-// ======================
-newChatBtn.addEventListener("click", () => {
+// =============================
+document.getElementById("newChat").addEventListener("click", () => {
+  modal.classList.remove("hidden");
+  modal.classList.add("show");
+});
+
+confirmButton.addEventListener("click", () => {
+  modal.classList.remove("show");
+  modal.classList.add("hidden");
+
+  localStorage.removeItem("conversationHistory");
+  conversationHistory = [];
   chatMessages.innerHTML = "";
-  conversationId = crypto.randomUUID();
+  startScreen.classList.remove("hidden");
+});
+
+cancelButton.addEventListener("click", () => {
+  modal.classList.remove("show");
+  modal.classList.add("hidden");
+});
+
+// =============================
+// EVENTOS
+// =============================
+sendButton.addEventListener("click", sendMessage);
+
+userInput.addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
 });
