@@ -39,16 +39,6 @@ function heartbeatIcon(msgElement) {
   if (icon) icon.classList.add("mitiga-heartbeat");
 }
 
-// NUEVO — escapar texto del usuario (no Markdown)
-function escapeHTML(str) {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
 // =============================
 // MENSAJES
 // =============================
@@ -60,22 +50,13 @@ function appendMessage(sender, text) {
     const html = marked.parse(text, { breaks: false });
 
     msg.innerHTML = `
-      <div class="bot-header">
-        <img src="images/mitiga-icon.png" class="mitiga-logo">
-        <span>MITIGA</span>
-      </div>
-      <div class="message-content">${html}</div>
-    `;
+    <div class="bot-header">
+      <img src="images/mitiga-icon.png" class="mitiga-logo">
+      <span>MITIGA</span>
+    </div>
+    <div class="message-content">${html}</div>
+  `;
   }
-
-  // ⬇️ AÑADIR ESTE BLOQUE EXACTO ⬇️
-  // NUEVO — render correcto del mensaje del usuario
-  if (sender === "user") {
-    msg.innerHTML = `
-      <div class="message-content">${escapeHTML(text)}</div>
-    `;
-  }
-  // ⬆️ FIN DEL PARCHE ⬆️
 
   chatMessages.appendChild(msg);
 
@@ -85,6 +66,7 @@ function appendMessage(sender, text) {
     msg.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 }
+
 
 // =============================
 // HISTORIAL
