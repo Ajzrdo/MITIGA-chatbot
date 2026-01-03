@@ -132,7 +132,12 @@ async function sendMessage() {
     hideTyping();
 
     if (!res.ok) {
-      appendMessage("bot", `Error HTTP ${res.status}`);
+      appendMessage(
+        "bot",
+        "He tenido un problema puntual al preparar la respuesta.\n\n" +
+        "No es grave y suele resolverse al intentarlo de nuevo.\n" +
+        "Si quieres, puedes volver a enviar la pregunta."
+      );
       return;
     }
 
@@ -157,7 +162,12 @@ async function sendMessage() {
 
   } catch {
     hideTyping();
-    appendMessage("bot", "Error de conexión con MITIGA.");
+    appendMessage(
+      "bot",
+      "He tenido un problema puntual al preparar la respuesta.\n\n" +
+      "Puede deberse a la conexión o a un tiempo de espera.\n" +
+      "Si quieres, vuelve a intentarlo en unos segundos."
+    );
   }
 }
 
