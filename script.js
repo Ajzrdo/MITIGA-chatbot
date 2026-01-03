@@ -56,6 +56,10 @@ function appendMessage(sender, text) {
     </div>
     <div class="message-content">${html}</div>
   `;
+  } else {
+    // Usuario (y cualquier otro sender) como texto plano
+    msg.innerHTML = `<div class="message-content"></div>`;
+    msg.querySelector(".message-content").textContent = text;
   }
 
   chatMessages.appendChild(msg);
