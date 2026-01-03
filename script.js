@@ -137,7 +137,11 @@ async function sendMessage() {
     }
 
     const data = await res.json();
-    const botReply = data.reply || "MITIGA no pudo responder.";
+    const botReply =
+      data.reply ??
+      data.message ??
+      data.content ??
+      "MITIGA no pudo responder.";
 
     appendMessage("bot", botReply);
 
