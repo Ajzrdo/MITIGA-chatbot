@@ -47,15 +47,15 @@ function appendMessage(sender, text) {
   msg.classList.add("message", sender);
 
   if (sender === "bot") {
+    const html = marked.parse(text, { breaks: false });
+
     msg.innerHTML = `
-      <div class="bot-header">
-        <img src="images/mitiga-icon.png" class="mitiga-logo">
-        <span>MITIGA</span>
-      </div>
-      <div class="message-content">${text}</div>
-    `;
-  } else {
-    msg.innerHTML = `<div class="message-content">${text}</div>`;
+    <div class="bot-header">
+      <img src="images/mitiga-icon.png" class="mitiga-logo">
+      <span>MITIGA</span>
+    </div>
+    <div class="message-content">${html}</div>
+  `;
   }
 
   chatMessages.appendChild(msg);
