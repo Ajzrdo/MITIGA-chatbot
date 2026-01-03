@@ -118,8 +118,16 @@ async function sendMessage() {
   showTyping();
 
   if (activeRequestController) activeRequestController.abort();
+
   const controller = new AbortController();
   activeRequestController = controller;
+
+  let isTimeout = false;
+
+  const timeoutId = setTimeout(() => {
+    isTimeout = true;
+    controller.abort();
+  }, REQUEST_TIMEOUT_MS);
 
   try {
     const res = await fetch(API_URL, {
@@ -128,6 +136,9 @@ async function sendMessage() {
       body: JSON.stringify({ messages: conversationHistory }),
       signal: controller.signal
     });
+
+    clearTimeout(timeoutId);
+
 
     hideTyping();
 
@@ -162,13 +173,24 @@ async function sendMessage() {
 
   } catch {
     hideTyping();
-    appendMessage(
-      "bot",
-      "He tenido un problema puntual al preparar la respuesta.\n\n" +
-      "Puede deberse a la conexión o a un tiempo de espera.\n" +
-      "Si quieres, vuelve a intentarlo en unos segundos."
-    );
+
+    if (isTimeout) {
+      appendMessage(
+        "bot",
+        "La respuesta está tardando más de lo habitual.\n\n" +
+        "Puede ser por la conexión o porque la pregunta requiere más tiempo.\n" +
+        "Si quieres, espera unos segundos o vuelve a intentarlo."
+      );
+    } else {
+      appendMessage(
+        "bot",
+        "He tenido un problema puntual al preparar la respuesta.\n\n" +
+        "No es grave y suele resolverse al intentarlo de nuevo.\n" +
+        "Si quieres, puedes volver a enviar la pregunta."
+      );
+    }
   }
+
 }
 
 // =============================
