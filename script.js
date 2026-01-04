@@ -197,6 +197,23 @@ async function sendMessage() {
 
 }
 
+function resetChat() {
+  // Estado lógico
+  conversationHistory = [];
+  localStorage.removeItem("conversationHistory");
+
+  // Estado visual
+  chatMessages.innerHTML = "";
+  startScreen.classList.remove("hidden");
+
+  // Reinsertar typing indicator (clave)
+  chatMessages.appendChild(typingIndicator);
+  hideTyping();
+
+  // Limpieza input
+  userInput.value = "";
+}
+
 // =============================
 // NUEVO CHAT
 // =============================
@@ -209,10 +226,7 @@ confirmButton.addEventListener("click", () => {
   modal.classList.remove("show");
   modal.classList.add("hidden");
 
-  localStorage.removeItem("conversationHistory");
-  conversationHistory = [];
-  chatMessages.innerHTML = "";
-  startScreen.classList.remove("hidden");
+  resetChat();
 });
 
 cancelButton.addEventListener("click", () => {
@@ -231,18 +245,3 @@ userInput.addEventListener("keydown", e => {
     sendMessage();
   }
 });
-
-function resetChat() {
-  conversationHistory = [];
-
-  const chatMessages = document.getElementById("chatMessages");
-  chatMessages.innerHTML = `
-    <div id="typingIndicator" class="hidden">
-      <img src="images/mitiga-icon.png" class="typing-icon" alt="MITIGA" />
-      <span>MITIGA está preparando su respuesta…</span>
-    </div>
-  `;
-
-  const modal = document.getElementById("confirmModal");
-  if (modal) modal.classList.add("hidden");
-}
