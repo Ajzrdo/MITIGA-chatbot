@@ -158,12 +158,45 @@ async function sendMessage() {
       data.content ??
       "MITIGA no pudo responder.";
 
-    appendMessage("bot", botReply);
+    function splitMITIGAResponse(text) {
+      const trimmed = text.trim();
 
+      // Buscar último salto de línea
+      const lastBreak = trimmed.lastIndexOf("\n");
+      if (lastBreak === -1) {
+        return { main: trimmed, question: null };
+      }
+
+      const main = trimmed.slice(0, lastBreak).trim();
+      const lastLine = trimmed.slice(lastBreak).trim();
+
+      // Regla MITIGA: una sola pregunta, siempre al final
+      if (lastLine.endsWith("?")) {
+        return {
+          main,
+          question: lastLine
+        };
+      }
+
+      return { main: trimmed, question: null };
+    }
+
+    const { main, question } = splitMITIGAResponse(botReply);
+
+    // Viñeta principal
+    appendMessage("bot", main);
+
+    // Viñeta de pregunta (si existe)
+    if (question) {
+      appendMessage("bot", question);
+    }
+
+    // Historial: se guarda igual que antes (mensaje único)
     conversationHistory.push({
       role: "assistant",
       content: botReply
     });
+
 
     localStorage.setItem(
       "conversationHistory",
