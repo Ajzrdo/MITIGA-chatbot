@@ -130,10 +130,14 @@ async function sendMessage() {
   }, REQUEST_TIMEOUT_MS);
 
   try {
+    const messagesForAPI = conversationHistory.filter(
+      m => m.role === "user"
+    );
+
     const res = await fetch(API_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages: conversationHistory }),
+      body: JSON.stringify({ messages: messagesForAPI }),
       signal: controller.signal
     });
 
