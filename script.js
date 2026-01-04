@@ -13,11 +13,6 @@ const chatMessages = document.getElementById("chatMessages");
 const typingIndicator = document.getElementById("typingIndicator");
 const startScreen = document.getElementById("start-screen");
 
-// Modal
-const modal = document.getElementById("modal");
-const confirmButton = document.getElementById("confirmButton");
-const cancelButton = document.getElementById("cancelButton");
-
 // =============================
 // ESTADO
 // =============================
@@ -194,45 +189,7 @@ async function sendMessage() {
       );
     }
   }
-
 }
-
-function resetChat() {
-  // Estado lógico
-  conversationHistory = [];
-  localStorage.removeItem("conversationHistory");
-
-  // Estado visual
-  chatMessages.innerHTML = "";
-  startScreen.classList.remove("hidden");
-
-  // Reinsertar typing indicator (clave)
-  chatMessages.appendChild(typingIndicator);
-  hideTyping();
-
-  // Limpieza input
-  userInput.value = "";
-}
-
-// =============================
-// NUEVO CHAT
-// =============================
-document.getElementById("newChat").addEventListener("click", () => {
-  modal.classList.remove("hidden");
-  modal.classList.add("show");
-});
-
-confirmButton.addEventListener("click", () => {
-  modal.classList.remove("show");
-  modal.classList.add("hidden");
-
-  resetChat();
-});
-
-cancelButton.addEventListener("click", () => {
-  modal.classList.remove("show");
-  modal.classList.add("hidden");
-});
 
 // =============================
 // EVENTOS
