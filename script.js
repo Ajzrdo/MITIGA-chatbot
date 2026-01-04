@@ -231,3 +231,18 @@ userInput.addEventListener("keydown", e => {
     sendMessage();
   }
 });
+
+function resetChat() {
+  conversationHistory = [];
+
+  const chatMessages = document.getElementById("chatMessages");
+  chatMessages.innerHTML = `
+    <div id="typingIndicator" class="hidden">
+      <img src="images/mitiga-icon.png" class="typing-icon" alt="MITIGA" />
+      <span>MITIGA está preparando su respuesta…</span>
+    </div>
+  `;
+
+  const modal = document.getElementById("confirmModal");
+  if (modal) modal.classList.add("hidden");
+}
