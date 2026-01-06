@@ -13,18 +13,13 @@ const chatMessages = document.getElementById("chatMessages");
 const typingIndicator = document.getElementById("typingIndicator");
 const startScreen = document.getElementById("start-screen");
 
-// RESET DE SESIÓN AL CARGAR
-localStorage.removeItem("conversationHistory");
-let conversationHistory = [];
-
 // =============================
-// RESET DE SESIÓN AL CARGAR
+// ESTADO
 // =============================
-// let conversationHistory = JSON.parse(
-localStorage.getItem("conversationHistory") || "[]";
-conversationHistory = [];
-// );
-// let activeRequestController = null;
+let conversationHistory = JSON.parse(
+  localStorage.getItem("conversationHistory") || "[]"
+);
+let activeRequestController = null;
 
 // =============================
 // ANIMACIONES
