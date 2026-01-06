@@ -18,10 +18,11 @@ localStorage.removeItem("conversationHistory");
 let conversationHistory = [];
 
 // =============================
-// ESTADO
+// RESET DE SESIÓN AL CARGAR
 // =============================
 // let conversationHistory = JSON.parse(
-//   localStorage.getItem("conversationHistory") || "[]"
+localStorage.getItem("conversationHistory") || "[]";
+conversationHistory = [];
 // );
 // let activeRequestController = null;
 
